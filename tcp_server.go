@@ -14,17 +14,19 @@ const (
 	LOGIN          = "1"
 	CHAT           = "2"
 	ROOM_MAX_USER  = 100
-	ROOM_MAX_COUNT = 50
+	ROOM_MAX_COUNT = 2
 )
 
+// Client - 채팅을 이용하는 사용자의 정보
 type Client struct {
-	conn net.Conn
-	read chan string
-	quit chan int
-	name string
-	room *Room
+	connection net.Conn
+	read       chan string
+	quit       chan int
+	name       string
+	room       *Room
 }
 
+// Room - 채팅방
 type Room struct {
 	num        int
 	clientlist *list.List
@@ -41,18 +43,18 @@ func main() {
 
 	chatting, err := net.Listen("tcp", ":5000")
 	if err != nil {
-		handleErrorServer(nil, err, "채팅 서버를 여는 도중 에러가 발생")
+		handleErrorServer(nil, err, "채팅 서버를 여는 데 실패하였습니다.")
 	}
 	defer chatting.Close()
 
 	for {
 		// waiting connection
-		conn, err := chatting.Accept()
+		connection, err := chatting.Accept()
 		if err != nil {
-			handleErrorServer(conn, err, "server accept error..")
+			handleErrorServer(connection, err, "사용자가 채팅 서버에 들어오는 데 실패하였습니다.")
 		}
 
-		go handleConnection(conn)
+		go handleConnection(connection)
 	}
 }
 
@@ -64,14 +66,14 @@ func handleErrorServer(conn net.Conn, err error, errmsg string) {
 	fmt.Println(errmsg)
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(connection net.Conn) {
 	read := make(chan string)
 	quit := make(chan int)
-	client := &Client{conn, read, quit, "unknown", &Room{-1, list.New()}}
+	client := &Client{connection, read, quit, "unknown", &Room{-1, list.New()}}
 
 	go handleClient(client)
 
-	fmt.Printf("remote Addr = %s\n", conn.RemoteAddr().String())
+	// fmt.Printf("remote Addr = %s\n", connection.RemoteAddr().String())
 }
 
 func handleClient(client *Client) {
