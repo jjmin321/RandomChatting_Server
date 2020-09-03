@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"container/list"
 	"fmt"
+	"log"
 	"net"
 	"strings"
 	"time"
@@ -13,8 +14,8 @@ import (
 const (
 	LOGIN          = "1"
 	CHAT           = "2"
-	ROOM_MAX_USER  = 100
-	ROOM_MAX_COUNT = 2
+	ROOM_MAX_USER  = 2
+	ROOM_MAX_COUNT = 50
 )
 
 // Client - 채팅을 이용하는 사용자의 정보
@@ -45,6 +46,7 @@ func main() {
 	if err != nil {
 		handleErrorServer(nil, err, "채팅 서버를 여는 데 실패하였습니다.")
 	}
+	log.Println("채팅 서버를 5000번 포트에 열었습니다.")
 	defer chatting.Close()
 
 	for {
@@ -69,30 +71,27 @@ func handleErrorServer(conn net.Conn, err error, errmsg string) {
 func handleConnection(connection net.Conn) {
 	read := make(chan string)
 	quit := make(chan int)
-	client := &Client{connection, read, quit, "unknown", &Room{-1, list.New()}}
+	client := &Client{connection, read, quit, "익명", &Room{-1, list.New()}}
 
 	go handleClient(client)
-
-	// fmt.Printf("remote Addr = %s\n", connection.RemoteAddr().String())
+	log.Printf("%s 에서 채팅 서버에 입장하였습니다.\t", connection.RemoteAddr().String())
 }
 
 func handleClient(client *Client) {
 	for {
 		select {
 		case msg := <-client.read:
-			if strings.HasPrefix(msg, "[G]") {
+			if strings.HasPrefix(msg, "[확성기]") {
 				sendToAllClients(client.name, msg)
-			} else if strings.HasPrefix(msg, "[R]") {
-				sendToRoomClients(client.room, client.name, msg)
-			} else if strings.HasPrefix(msg, "[W]") {
+			} else if strings.HasPrefix(msg, "[귓속말]") {
 				sendToClientToClient(client, msg)
 			} else {
-				sendToClient(client, client.name, msg)
+				sendToRoomClients(client.room, client.name, msg)
 			}
 
 		case <-client.quit:
-			fmt.Println("disconnect client")
-			client.conn.Close()
+			sendToRoomClients(client.room, client.name, "님이 채팅을 떠났습니다.")
+			client.connection.Close()
 			client.deleteFromList()
 			return
 
@@ -104,12 +103,13 @@ func handleClient(client *Client) {
 }
 
 func recvFromClient(client *Client) {
-	recvmsg, err := bufio.NewReader(client.conn).ReadString('\n')
+	recvmsg, err := bufio.NewReader(client.connection).ReadString('\n')
 	if err != nil {
-		handleErrorServer(client.conn, err, "string read error..")
+		// handleErrorServer(client.connection, err, "클라이언트로부터 채팅을 읽어오는데 실패하였습니다.")
 		client.quit <- 0
 		return
 	}
+	log.Print("1 : 로그인, 2 : 채팅 ", recvmsg)
 
 	strmsgs := strings.Split(recvmsg, "|")
 
@@ -119,20 +119,22 @@ func recvFromClient(client *Client) {
 
 		room := allocateEmptyRoom()
 		if room.num < 1 {
-			handleErrorServer(client.conn, nil, "max user limit!")
+			handleErrorServer(client.connection, nil, "방 인원이 다 찼습니다.")
 		}
 		client.room = room
 
 		if !client.dupUserCheck() {
-			handleErrorServer(client.conn, nil, "duplicate user!!"+client.name)
+			handleErrorServer(client.connection, nil, "duplicate user!!"+client.name)
 			client.quit <- 0
 			return
 		}
-		fmt.Printf("\nhello = %s, your room number is = %d\n", client.name, client.room.num)
+		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
+		client.read <- (client.name + "님이 채팅방에 들어오셨습니다.")
+		sendToRoomClients(client.room, client.name, "님이 채팅방에 들어오셨습니다.")
 		room.clientlist.PushBack(*client)
 
 	case CHAT:
-		fmt.Printf("\nrecv message = %s\n", strmsgs[1])
+		log.Printf("\n"+client.name+" : %s\n", strmsgs[1])
 		client.read <- strmsgs[1]
 	}
 }
@@ -144,9 +146,9 @@ func sendToClient(client *Client, sender string, msg string) {
 	buffer.WriteString("] ")
 	buffer.WriteString(msg)
 
-	fmt.Printf("client = %s ==> %s", client.name, buffer.String())
+	log.Printf("%s님에게 전송된 메세지 : %s", client.name, buffer.String())
 
-	fmt.Fprintf(client.conn, "%s", buffer.String())
+	fmt.Fprintf(client.connection, "%s", buffer.String())
 }
 
 func sendToAllClients(sender string, msg string) {
@@ -165,13 +167,14 @@ func (client *Client) deleteFromList() {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
-			if client.conn == c.conn {
+			if client.connection == c.connection {
 				r.clientlist.Remove(e)
 			}
 		}
 	}
 }
 
+// dupUserCheck : 닉네임 중복 체크(같은 사람이 두 번 접속하는 것을 방지)
 func (client *Client) dupUserCheck() bool {
 	for re := roomlist.Front(); re != nil; re = re.Next() {
 		r := re.Value.(Room)
@@ -189,19 +192,15 @@ func (client *Client) dupUserCheck() bool {
 func allocateEmptyRoom() *Room {
 	for e := roomlist.Front(); e != nil; e = e.Next() {
 		r := e.Value.(Room)
-
-		fmt.Printf("clientlist len = %d", r.clientlist.Len())
 		if r.clientlist.Len() < ROOM_MAX_USER {
 			return &r
 		}
 	}
-
 	// full room
 	return &Room{-1, list.New()}
 }
 
 func sendToRoomClients(room *Room, sender string, msg string) {
-	fmt.Printf("room broad cast message = %s", msg)
 	for e := room.clientlist.Front(); e != nil; e = e.Next() {
 		c := e.Value.(Client)
 		sendToClient(&c, sender, msg)
@@ -226,7 +225,7 @@ func sendToClientToClient(client *Client, msg string) {
 	strmsgs := strings.Split(msg, " ")
 
 	target := findClientByName(strmsgs[1])
-	if target.conn == nil {
+	if target.connection == nil {
 		fmt.Println("Can't find target User")
 		return
 	}
