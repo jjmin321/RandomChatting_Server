@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"time"
@@ -17,15 +18,17 @@ func main() {
 	connection, err := net.Dial("tcp", "127.0.0.1:5000")
 	if err != nil {
 		handleErrorClient(connection, "채팅 서버에 연결하는 데 실패하였습니다.")
+		os.Exit(2)
+		return
 	}
 
 	message := make(chan string)
 
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Input your name :")
+	fmt.Print("닉네임을 입력해주세요 :")
 	name, err := reader.ReadString('\n')
 	if err != nil {
-		handleErrorClient(connection, "read input failed..")
+		handleErrorClient(connection, "닉네임을 읽는 데 실패하였습니다.")
 	}
 
 	// login
@@ -40,16 +43,16 @@ func handleErrorClient(conn net.Conn, errmsg string) {
 	if conn != nil {
 		conn.Close()
 	}
-	fmt.Println(errmsg)
+	log.Println(errmsg)
 }
 
 func handleSendMsg(conn net.Conn) {
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("Text to send : ")
+		fmt.Print("상대방에게 보낼 메세지를 입력하세요 : ")
 		text, err := reader.ReadString('\n')
 		if err != nil {
-			handleErrorClient(conn, "read input failed..")
+			handleErrorClient(conn, "메세지를 읽는 데 실패하였습니다.")
 		}
 
 		fmt.Fprintf(conn, "%s|%s", CHAT, text)
@@ -60,7 +63,7 @@ func handleRecvMsg(conn net.Conn, msgch chan string) {
 	for {
 		select {
 		case msg := <-msgch:
-			fmt.Printf("\nMessage from server : %s\n", msg)
+			fmt.Printf("\n%s\n", msg)
 		default:
 			go recvFromServer(conn, msgch)
 			time.Sleep(1000 * time.Millisecond)
@@ -76,4 +79,12 @@ func recvFromServer(conn net.Conn, msgch chan string) {
 		return
 	}
 	msgch <- msg
+}
+
+func handleQuitClient() {
+
+}
+
+func handleEnterClient() {
+
 }

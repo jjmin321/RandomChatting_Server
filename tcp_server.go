@@ -74,7 +74,7 @@ func handleConnection(connection net.Conn) {
 	client := &Client{connection, read, quit, "익명", &Room{-1, list.New()}}
 
 	go handleClient(client)
-	log.Printf("%s 에서 채팅 서버에 입장하였습니다.\t", connection.RemoteAddr().String())
+	log.Printf("77 %s 에서 채팅 서버에 입장하였습니다.\t", connection.RemoteAddr().String())
 }
 
 func handleClient(client *Client) {
@@ -109,7 +109,7 @@ func recvFromClient(client *Client) {
 		client.quit <- 0
 		return
 	}
-	log.Print("1 : 로그인, 2 : 채팅 ", recvmsg)
+	log.Print("112 1 : 로그인, 2 : 채팅 ", recvmsg)
 
 	strmsgs := strings.Split(recvmsg, "|")
 
@@ -128,8 +128,7 @@ func recvFromClient(client *Client) {
 			client.quit <- 0
 			return
 		}
-		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
-		client.read <- (client.name + "님이 채팅방에 들어오셨습니다.")
+		log.Printf("131 안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
 		sendToRoomClients(client.room, client.name, "님이 채팅방에 들어오셨습니다.")
 		room.clientlist.PushBack(*client)
 
@@ -146,7 +145,7 @@ func sendToClient(client *Client, sender string, msg string) {
 	buffer.WriteString("] ")
 	buffer.WriteString(msg)
 
-	log.Printf("%s님에게 전송된 메세지 : %s", client.name, buffer.String())
+	log.Printf("148 %s님에게 전송된 메세지 : %s", client.name, buffer.String())
 
 	fmt.Fprintf(client.connection, "%s", buffer.String())
 }
