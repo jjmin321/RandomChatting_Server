@@ -49,7 +49,7 @@ func handleErrorClient(conn net.Conn, errmsg string) {
 func handleSendMsg(conn net.Conn) {
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("상대방에게 보낼 메세지를 입력하세요 : ")
+		fmt.Print("채팅을 입력하세요 : ")
 		text, err := reader.ReadString('\n')
 		if err != nil {
 			handleErrorClient(conn, "메세지를 읽는 데 실패하였습니다.")
@@ -79,12 +79,4 @@ func recvFromServer(conn net.Conn, msgch chan string) {
 		return
 	}
 	msgch <- msg
-}
-
-func handleQuitClient() {
-
-}
-
-func handleEnterClient() {
-
 }

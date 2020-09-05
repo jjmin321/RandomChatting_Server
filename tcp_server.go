@@ -74,7 +74,7 @@ func handleConnection(connection net.Conn) {
 	client := &Client{connection, read, quit, "익명", &Room{-1, list.New()}}
 
 	go handleClient(client)
-	log.Printf("77 %s 에서 채팅 서버에 입장하였습니다.\t", connection.RemoteAddr().String())
+	log.Printf("%s 에서 채팅 서버에 입장하였습니다.\t", connection.RemoteAddr().String())
 }
 
 func handleClient(client *Client) {
@@ -90,7 +90,7 @@ func handleClient(client *Client) {
 			}
 
 		case <-client.quit:
-			sendToRoomClients(client.room, client.name, "님이 채팅을 떠났습니다.")
+			log.Print(client.name + " 님이 나갔습니다.")
 			client.connection.Close()
 			client.deleteFromList()
 			return
@@ -109,7 +109,7 @@ func recvFromClient(client *Client) {
 		client.quit <- 0
 		return
 	}
-	log.Print("112 1 : 로그인, 2 : 채팅 ", recvmsg)
+	log.Print("1 : 로그인, 2 : 채팅 ", recvmsg)
 
 	strmsgs := strings.Split(recvmsg, "|")
 
@@ -124,16 +124,16 @@ func recvFromClient(client *Client) {
 		client.room = room
 
 		if !client.dupUserCheck() {
-			handleErrorServer(client.connection, nil, "duplicate user!!"+client.name)
+			handleErrorServer(client.connection, nil, "현재 사용중인 이름!")
 			client.quit <- 0
 			return
 		}
-		log.Printf("131 안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
-		sendToRoomClients(client.room, client.name, "님이 채팅방에 들어오셨습니다.")
+		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
+		sendToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
 		room.clientlist.PushBack(*client)
 
 	case CHAT:
-		log.Printf("\n"+client.name+" : %s\n", strmsgs[1])
+		log.Printf("\n"+client.name+" 님의 메시지: %s\n", strmsgs[1])
 		client.read <- strmsgs[1]
 	}
 }
@@ -145,8 +145,7 @@ func sendToClient(client *Client, sender string, msg string) {
 	buffer.WriteString("] ")
 	buffer.WriteString(msg)
 
-	log.Printf("148 %s님에게 전송된 메세지 : %s", client.name, buffer.String())
-
+	log.Printf("%s님에게 전송된 메세지 : %s", client.name, buffer.String())
 	fmt.Fprintf(client.connection, "%s", buffer.String())
 }
 
