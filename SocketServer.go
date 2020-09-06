@@ -9,8 +9,18 @@ import (
 	"github.com/labstack/echo/middleware"
 )
 
+const (
+	LOGIN          = "1"
+	CHAT           = "2"
+	ROOM_MAX_USER  = 2
+	ROOM_MAX_COUNT = 50
+)
+
 var (
-	upgrader = websocket.Upgrader{}
+	upgrader = &websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
 )
 
 func hello(c echo.Context) error {
