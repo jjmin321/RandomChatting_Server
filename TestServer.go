@@ -24,7 +24,7 @@ type TestClient struct {
 	read       chan string
 	quit       chan int
 	name       string
-	room       *Room
+	room       *TestRoom
 }
 
 // TestRoom - 채팅방 정보
@@ -50,8 +50,8 @@ func init() {
 }
 
 func testsocket(c echo.Context) error {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+	Testupgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	ws, err := Testupgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		return err
 	}
