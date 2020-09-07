@@ -18,8 +18,8 @@ const (
 	ROOM_MAX_COUNT = 50
 )
 
-// Client - 채팅을 이용하는 사용자의 정보
-type Client struct {
+// TestClient - 채팅을 이용하는 사용자의 정보
+type TestClient struct {
 	connection websocket.Conn
 	read       chan string
 	quit       chan int
@@ -27,15 +27,15 @@ type Client struct {
 	room       *Room
 }
 
-// Room - 채팅방 정보
-type Room struct {
+// TestRoom - 채팅방 정보
+type TestRoom struct {
 	num        int
 	clientlist *list.List
 }
 
 var (
-	roomlist *list.List
-	upgrader = &websocket.Upgrader{
+	Testroomlist *list.List
+	Testupgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
@@ -45,11 +45,11 @@ func init() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.GET("/", socket)
+	e.GET("/", testsocket)
 	e.Logger.Fatal(e.Start(":80"))
 }
 
-func socket(c echo.Context) error {
+func testsocket(c echo.Context) error {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
@@ -74,5 +74,5 @@ func socket(c echo.Context) error {
 	}
 }
 
-func main() {
-}
+// func main() {
+// }
