@@ -1,14 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"container/list"
 	"fmt"
-	"
-	"github.com/gorilla/websocket"e"
 	"log"
 	"net/http"
 	"strings"
-	"tim
+	"time"
+
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
@@ -22,11 +23,11 @@ const (
 
 // TestClient - 채팅을 이용하는 사용자의 정보
 type TestClient struct {
-	connection websocket.Conn
-	read       chan string
-	quit       chan int
-	name       string
-	room       *TestRoom
+	ws   websocket.Conn
+	read chan string
+	quit chan int
+	name string
+	room *TestRoom
 }
 
 // TestRoom - 채팅방 정보
@@ -57,31 +58,31 @@ func testsocket(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Print("채팅 서버를 80번 포트에 열었습니다.")
+	log.Print("누군가가 입장하였습니다")
 	defer ws.Close()
 
 	for {
 		// Write
-		err := ws.WriteMessage(ws.TextMessage, []byte("Hello, Client!"))
+		err := ws.WriteMessage(websocket.TextMessage, []byte("Hello, Client!"))
 		if err != nil {
 			c.Logger().Error(err)
 		}
-
 		go testhandleConnection(ws)
-
-		
-		fmt.Printf("%s\n", msg)
 	}
+	return c.JSON(200, map[string]interface{}{
+		"status":  200,
+		"message": "접속 끊김 ㅃㅇ",
+	})
 }
 
-func testhandleConnection(connection *websocket.Conn) {
+func testhandleConnection(ws *websocket.Conn) {
 	read := make(chan string)
 	quit := make(chan int)
-	client := &Client{*connection, read, quit, "익명", &Room{-1, list.New()}}
+	client := &Client{*ws, read, quit, "익명", &Room{-1, list.New()}}
 	go testhandleClient(client)
 }
 
-func testhandleClient(client *Client) {
+func testhandleClient(client *TestClient) {
 	for {
 		select {
 		case msg := <-client.read:
@@ -106,12 +107,62 @@ func testhandleClient(client *Client) {
 	}
 }
 
-func testrecvFromClient(client *Client) {
+func testrecvFromClient(client *TestClient) {
 	// Read
-	_, msg, err := ws.ReadMessage()
+	_, msg, err := client.ws.ReadMessage()
 	if err != nil {
-		c.Logger().Error(err)
+		client.quit <- 0
+		return
+	}
+	log.Print("1 : 로그인, 2 : 채팅 ", msg)
+
+	strmsgs := strings.Split(msg, "|")
+
+	switch strmsgs[0] {
+	case LOGIN:
+		client.name = strings.TrimSpace(strmsgs[1])
+
+		room := allocateEmptyRoom()
+		if room.num < 1 {
+			handleErrorServer(client.connection, nil, "방 인원이 다 찼습니다.")
+		}
+		client.room = room
+
+		if !client.dupUserCheck() {
+			handleErrorServer(client.connection, nil, "현재 사용중인 이름!")
+			client.quit <- 0
+			return
+		}
+		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
+		sendToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
+		room.clientlist.PushBack(*client)
+
+	case CHAT:
+		log.Printf("\n"+client.name+" 님의 메시지: %s\n", strmsgs[1])
+		client.read <- strmsgs[1]
 	}
 }
+
+func testsendToAllClients(sender string, msg string) {
+	for re := roomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(Room)
+		for e := r.clientlist.Front(); e != nil; e = e.Next() {
+			c := e.Value.(Client)
+			sendToClient(&c, sender, msg)
+		}
+	}
+}
+
+func sendToClient(client *TestClient, sender string, msg string) {
+	var buffer bytes.Buffer
+	buffer.WriteString("[")
+	buffer.WriteString(sender)
+	buffer.WriteString("] ")
+	buffer.WriteString(msg)
+
+	log.Printf("%s님에게 전송된 메세지 : %s", client.name, buffer.String())
+	fmt.Fprintf(client.connection, "%s", buffer.String())
+}
+
 func main() {
 }
