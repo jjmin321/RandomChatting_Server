@@ -160,7 +160,7 @@ func testsendToAllClients(sender string, msg string) {
 	}
 }
 
-// 원래는 버퍼로 해서 작성했다면 이제는 웹소켓으로 작성하게끔 짜야됨.
+// 원래는 버퍼로 해서 작성했다면 이제는 웹소켓으로 작성하게끔 짜야됨. 141번째 줄
 func testsendToClient(client *TestClient, sender string, msg string) {
 	// err := client.ws.WriteMessage(websocket.TextMessage, []byte("Hello, Client!"))
 	// if err != nil {
