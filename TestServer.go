@@ -109,11 +109,12 @@ func testhandleClient(client *TestClient) {
 
 func testrecvFromClient(client *TestClient) {
 	// Read
-	_, msg, err := client.ws.ReadMessage()
+	_, bytemsg, err := client.ws.ReadMessage()
 	if err != nil {
 		client.quit <- 0
 		return
 	}
+	msg := string(bytemsg)
 	log.Print("1 : 로그인, 2 : 채팅 ", msg)
 
 	strmsgs := strings.Split(msg, "|")
@@ -122,19 +123,20 @@ func testrecvFromClient(client *TestClient) {
 	case LOGIN:
 		client.name = strings.TrimSpace(strmsgs[1])
 
-		room := allocateEmptyRoom()
+		room := testallocateEmptyRoom()
 		if room.num < 1 {
-			handleErrorServer(client.connection, nil, "방 인원이 다 찼습니다.")
+			client.ws.Close()
+			log.Print("방 인원이 다 찼습니다.")
 		}
 		client.room = room
 
-		if !client.dupUserCheck() {
-			handleErrorServer(client.connection, nil, "현재 사용중인 이름!")
-			client.quit <- 0
+		if !client.testdupUserCheck() {
+			client.ws.Close()
+			log.Print("닉네임 중복!")
 			return
 		}
 		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
-		sendToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
+		testsendToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
 		room.clientlist.PushBack(*client)
 
 	case CHAT:
@@ -143,17 +145,29 @@ func testrecvFromClient(client *TestClient) {
 	}
 }
 
+func testsendToRoomClients(room *TestRoom, sender string, msg string) {
+	for e := room.clientlist.Front(); e != nil; e = e.Next() {
+		c := e.Value.(TestClient)
+		testsendToClient(&c, sender, msg)
+	}
+}
+
 func testsendToAllClients(sender string, msg string) {
 	for re := roomlist.Front(); re != nil; re = re.Next() {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
-			c := e.Value.(Client)
-			sendToClient(&c, sender, msg)
+			c := e.Value.(TestClient)
+			testsendToClient(&c, sender, msg)
 		}
 	}
 }
 
-func sendToClient(client *TestClient, sender string, msg string) {
+// 원래는 버퍼로 해서 작성했다면 이제는 웹소켓으로 작성하게끔 짜야됨.
+func testsendToClient(client *TestClient, sender string, msg string) {
+	// err := client.ws.WriteMessage(websocket.TextMessage, []byte("Hello, Client!"))
+	// if err != nil {
+	// 	c.Logger().Error(err)
+	// }
 	var buffer bytes.Buffer
 	buffer.WriteString("[")
 	buffer.WriteString(sender)
@@ -162,6 +176,30 @@ func sendToClient(client *TestClient, sender string, msg string) {
 
 	log.Printf("%s님에게 전송된 메세지 : %s", client.name, buffer.String())
 	fmt.Fprintf(client.connection, "%s", buffer.String())
+}
+
+func testallocateEmptyRoom() *TestRoom {
+	for e := roomlist.Front(); e != nil; e = e.Next() {
+		r := e.Value.(TestRoom)
+		if r.clientlist.Len() < ROOM_MAX_USER {
+			return &r
+		}
+	}
+	// 방 다참
+	return &TestRoom{-1, list.New()}
+}
+
+func (client *TestClient) testdupUserCheck() bool {
+	for re := roomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(TestRoom)
+		for e := r.clientlist.Front(); e != nil; e = e.Next() {
+			c := e.Value.(Client)
+			if strings.Compare(client.name, c.name) == 0 {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func main() {
