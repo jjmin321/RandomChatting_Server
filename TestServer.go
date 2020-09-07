@@ -3,10 +3,12 @@ package main
 import (
 	"container/list"
 	"fmt"
+	"
+	"github.com/gorilla/websocket"e"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/websocket"
+	"strings"
+	"tim
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
@@ -60,19 +62,56 @@ func testsocket(c echo.Context) error {
 
 	for {
 		// Write
-		err := ws.WriteMessage(websocket.TextMessage, []byte("Hello, Client!"))
+		err := ws.WriteMessage(ws.TextMessage, []byte("Hello, Client!"))
 		if err != nil {
 			c.Logger().Error(err)
 		}
 
-		// Read
-		_, msg, err := ws.ReadMessage()
-		if err != nil {
-			c.Logger().Error(err)
-		}
+		go testhandleConnection(ws)
+
+		
 		fmt.Printf("%s\n", msg)
 	}
 }
 
+func testhandleConnection(connection *websocket.Conn) {
+	read := make(chan string)
+	quit := make(chan int)
+	client := &Client{*connection, read, quit, "익명", &Room{-1, list.New()}}
+	go testhandleClient(client)
+}
+
+func testhandleClient(client *Client) {
+	for {
+		select {
+		case msg := <-client.read:
+			if strings.HasPrefix(msg, "[확성기]") {
+				sendToAllClients(client.name, msg)
+			} else if strings.HasPrefix(msg, "[귓속말]") {
+				sendToClientToClient(client, msg)
+			} else {
+				sendToRoomClients(client.room, client.name, msg)
+			}
+
+		case <-client.quit:
+			log.Print(client.name + " 님이 나갔습니다.")
+			client.connection.Close()
+			client.deleteFromList()
+			return
+
+		default:
+			go recvFromClient(client)
+			time.Sleep(1000 * time.Millisecond)
+		}
+	}
+}
+
+func testrecvFromClient(client *Client) {
+	// Read
+	_, msg, err := ws.ReadMessage()
+	if err != nil {
+		c.Logger().Error(err)
+	}
+}
 func main() {
 }
