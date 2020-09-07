@@ -1,3 +1,6 @@
+
+
+
 package main
 
 import (
@@ -62,8 +65,11 @@ func socket(c echo.Context) error {
 		// Write
 		err := ws.WriteMessage(websocket.TextMessage, []byte("Hello, Client!"))
 		if err != nil {
-			c.Logger().Error(err)
+			log.Print("사용자가 채팅 서버에 들어오는 데 실패하였습니다.")
+			ws.Close()
 		}
+		
+		go 
 
 		// Read
 		_, msg, err := ws.ReadMessage()
@@ -74,5 +80,12 @@ func socket(c echo.Context) error {
 	}
 }
 
-func main() {
-}
+// func main() {
+// 	roomlist := list.New()
+// 	for i := 0; i < ROOM_MAX_COUNT; i++ {
+// 		room := &Room{i+1, list.New()}
+// 		roomlist.PushBack(*room)
+// 	}
+// 	chatting, err := websocket.
+
+// }

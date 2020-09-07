@@ -74,5 +74,5 @@ func testsocket(c echo.Context) error {
 	}
 }
 
-// func main() {
-// }
+func main() {
+}
