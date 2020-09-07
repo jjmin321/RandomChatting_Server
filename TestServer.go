@@ -78,7 +78,7 @@ func testsocket(c echo.Context) error {
 func testhandleConnection(ws *websocket.Conn) {
 	read := make(chan string)
 	quit := make(chan int)
-	client := &Client{*ws, read, quit, "익명", &Room{-1, list.New()}}
+	client := &TestClient{*ws, read, quit, "익명", &TestRoom{-1, list.New()}}
 	go testhandleClient(client)
 }
 
@@ -87,16 +87,14 @@ func testhandleClient(client *TestClient) {
 		select {
 		case msg := <-client.read:
 			if strings.HasPrefix(msg, "[확성기]") {
-				sendToAllClients(client.name, msg)
-			} else if strings.HasPrefix(msg, "[귓속말]") {
-				sendToClientToClient(client, msg)
+				testsendToAllClients(client.name, msg)
 			} else {
-				sendToRoomClients(client.room, client.name, msg)
+				testsendToRoomClients(client.room, client.name, msg)
 			}
 
 		case <-client.quit:
 			log.Print(client.name + " 님이 나갔습니다.")
-			client.connection.Close()
+			client.ws.Close()
 			client.deleteFromList()
 			return
 
