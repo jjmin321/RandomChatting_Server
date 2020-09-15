@@ -94,11 +94,11 @@ func testhandleClient(client *TestClient) {
 		case <-client.quit:
 			log.Print(client.name + " 님이 나갔습니다.")
 			client.ws.Close()
-			client.deleteFromList()
+			client.testdeleteFromList()
 			return
 
 		default:
-			go recvFromClient(client)
+			go testrecvFromClient(client)
 			time.Sleep(1000 * time.Millisecond)
 		}
 	}
@@ -128,8 +128,8 @@ func testrecvFromClient(client *TestClient) {
 		client.room = room
 
 		if !client.testdupUserCheck() {
-			client.ws.Close()
-			log.Print("닉네임 중복!")
+			log.Print("닉네임이 중복됨!")
+			client.quit <- 0
 			return
 		}
 		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
@@ -190,6 +190,18 @@ func (client *TestClient) testdupUserCheck() bool {
 		}
 	}
 	return true
+}
+
+func (testClient *TestClient) testdeleteFromList() {
+	for re := Testroomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(TestRoom)
+		for e := r.clientlist.Front(); e != nil; e = e.Next() {
+			c := e.Value.(TestClient)
+			if testClient.ws.RemoteAddr() == c.ws.RemoteAddr() {
+				r.clientlist.Remove(e)
+			}
+		}
+	}
 }
 
 func main() {
