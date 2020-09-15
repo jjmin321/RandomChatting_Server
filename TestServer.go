@@ -150,7 +150,7 @@ func testsendToRoomClients(room *TestRoom, sender string, msg string) {
 }
 
 func testsendToAllClients(sender string, msg string) {
-	for re := roomlist.Front(); re != nil; re = re.Next() {
+	for re := Testroomlist.Front(); re != nil; re = re.Next() {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(TestClient)
@@ -169,7 +169,7 @@ func testsendToClient(client *TestClient, sender string, msg string) {
 }
 
 func testallocateEmptyRoom() *TestRoom {
-	for e := roomlist.Front(); e != nil; e = e.Next() {
+	for e := Testroomlist.Front(); e != nil; e = e.Next() {
 		r := e.Value.(TestRoom)
 		if r.clientlist.Len() < ROOM_MAX_USER {
 			return &r
@@ -180,7 +180,7 @@ func testallocateEmptyRoom() *TestRoom {
 }
 
 func (client *TestClient) testdupUserCheck() bool {
-	for re := roomlist.Front(); re != nil; re = re.Next() {
+	for re := Testroomlist.Front(); re != nil; re = re.Next() {
 		r := re.Value.(TestRoom)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
