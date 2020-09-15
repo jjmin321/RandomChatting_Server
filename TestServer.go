@@ -65,7 +65,7 @@ func testsocket(c echo.Context) error {
 		if err != nil {
 			c.Logger().Error(err)
 		}
-		go testhandleConnection(ws)
+		testhandleConnection(ws)
 	}
 	return c.JSON(200, map[string]interface{}{
 		"status":  200,
@@ -151,7 +151,7 @@ func testsendToRoomClients(room *TestRoom, sender string, msg string) {
 
 func testsendToAllClients(sender string, msg string) {
 	for re := Testroomlist.Front(); re != nil; re = re.Next() {
-		r := re.Value.(Room)
+		r := re.Value.(TestRoom)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(TestClient)
 			testsendToClient(&c, sender, msg)
@@ -183,7 +183,7 @@ func (client *TestClient) testdupUserCheck() bool {
 	for re := Testroomlist.Front(); re != nil; re = re.Next() {
 		r := re.Value.(TestRoom)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
-			c := e.Value.(Client)
+			c := e.Value.(TestClient)
 			if strings.Compare(client.name, c.name) == 0 {
 				return false
 			}
