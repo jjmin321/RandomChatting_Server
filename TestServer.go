@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"container/list"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -45,11 +43,11 @@ var (
 )
 
 func init() {
-	e := echo.New()
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-	e.GET("/", testsocket)
-	e.Logger.Fatal(e.Start(":80"))
+	Testroomlist = list.New()
+	for i := 0; i < ROOM_MAX_COUNT; i++ {
+		room := &TestRoom{i + 1, list.New()}
+		Testroomlist.PushBack(*room)
+	}
 }
 
 func testsocket(c echo.Context) error {
@@ -58,7 +56,7 @@ func testsocket(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Print("누군가가 입장하였습니다")
+	log.Print("사용자가 채팅 서버에 입장하였습니다")
 	defer ws.Close()
 
 	for {
@@ -80,6 +78,7 @@ func testhandleConnection(ws *websocket.Conn) {
 	quit := make(chan int)
 	client := &TestClient{*ws, read, quit, "익명", &TestRoom{-1, list.New()}}
 	go testhandleClient(client)
+	log.Printf("%s에서 채팅 서버에 입장하였습니다.\t", ws.RemoteAddr().String())
 }
 
 func testhandleClient(client *TestClient) {
@@ -160,20 +159,13 @@ func testsendToAllClients(sender string, msg string) {
 	}
 }
 
-// 원래는 버퍼로 해서 작성했다면 이제는 웹소켓으로 작성하게끔 짜야됨. 141번째 줄
 func testsendToClient(client *TestClient, sender string, msg string) {
-	// err := client.ws.WriteMessage(websocket.TextMessage, []byte("Hello, Client!"))
-	// if err != nil {
-	// 	c.Logger().Error(err)
-	// }
-	var buffer bytes.Buffer
-	buffer.WriteString("[")
-	buffer.WriteString(sender)
-	buffer.WriteString("] ")
-	buffer.WriteString(msg)
-
-	log.Printf("%s님에게 전송된 메세지 : %s", client.name, buffer.String())
-	fmt.Fprintf(client.connection, "%s", buffer.String())
+	chatting := sender + "|" + msg
+	err := client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
+	if err != nil {
+		log.Print("167번째 줄 채팅 보내기 에러")
+	}
+	log.Printf("%s님에게 전송된 메세지 : %s", client.name, chatting)
 }
 
 func testallocateEmptyRoom() *TestRoom {
@@ -201,4 +193,9 @@ func (client *TestClient) testdupUserCheck() bool {
 }
 
 func main() {
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.GET("/", testsocket)
+	e.Logger.Fatal(e.Start(":80"))
 }
