@@ -52,7 +52,6 @@ func init() {
 
 func testsocket(c echo.Context) error {
 	Testupgrader.CheckOrigin = func(r *http.Request) bool { return true }
-
 	for {
 		ws, err := Testupgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
@@ -127,7 +126,7 @@ func testrecvFromClient(client *TestClient) {
 		}
 		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
 		// testsendToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
-		testsend
+		// testsend
 		room.clientlist.PushBack(*client)
 
 	case CHAT:
@@ -200,7 +199,7 @@ func (testClient *TestClient) testdeleteFromList() {
 
 func main() {
 	e := echo.New()
-	e.Use(middleware.Logger())
+	// e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.GET("/", testsocket)
 	e.Logger.Fatal(e.Start(":80"))
