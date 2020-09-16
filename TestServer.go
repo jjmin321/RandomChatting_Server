@@ -85,7 +85,7 @@ func testhandleClient(client *TestClient) {
 			}
 
 		case <-client.quit:
-			log.Printf("%s에서 %s님이 채팅 서버에서 나가셨습니다.", client.ws.RemoteAddr().String(), client.name)
+			log.Printf("%s : %s번째 방의 %s님이 채팅 서버에서 나가셨습니다.", client.ws.RemoteAddr().String(), client.room, client.name)
 			client.ws.Close()
 			client.testdeleteFromList()
 			return
@@ -126,7 +126,8 @@ func testrecvFromClient(client *TestClient) {
 			return
 		}
 		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
-		testsendToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
+		// testsendToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
+		testsend
 		room.clientlist.PushBack(*client)
 
 	case CHAT:
@@ -153,7 +154,7 @@ func testsendToAllClients(sender string, msg string) {
 }
 
 func testsendToClient(client *TestClient, sender string, msg string) {
-	chatting := sender + "|" + msg
+	chatting := sender + " : " + msg
 	err := client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
 	if err != nil {
 		log.Print("167번째 줄 채팅 보내기 에러")
