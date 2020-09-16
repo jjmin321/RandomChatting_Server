@@ -52,20 +52,13 @@ func init() {
 
 func testsocket(c echo.Context) error {
 	Testupgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	ws, err := Testupgrader.Upgrade(c.Response(), c.Request(), nil)
-	if err != nil {
-		return err
-	}
-	log.Print("사용자가 채팅 서버에 입장하였습니다")
-	defer ws.Close()
 
 	for {
-		// Write
-		err := ws.WriteMessage(websocket.TextMessage, []byte("Hello, Client!"))
+		ws, err := Testupgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
-			c.Logger().Error(err)
+			return err
 		}
-		testhandleConnection(ws)
+		go testhandleConnection(ws)
 	}
 	return c.JSON(200, map[string]interface{}{
 		"status":  200,
@@ -92,7 +85,7 @@ func testhandleClient(client *TestClient) {
 			}
 
 		case <-client.quit:
-			log.Print(client.name + " 님이 나갔습니다.")
+			log.Printf("%s에서 %s님이 채팅 서버에서 나가셨습니다.", client.ws.RemoteAddr().String(), client.name)
 			client.ws.Close()
 			client.testdeleteFromList()
 			return
