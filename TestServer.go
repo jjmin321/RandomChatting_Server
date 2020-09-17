@@ -88,7 +88,7 @@ func testhandleClient(client *TestClient) {
 			}
 
 		case <-client.quit:
-			log.Printf("%s : %s번째 방의 %s님이 채팅 서버에서 나가셨습니다.", client.ws.RemoteAddr().String(), client.room.num, client.name)
+			log.Printf("%s : %d번째 방의 %s님이 채팅 서버에서 나가셨습니다.", client.ws.RemoteAddr().String(), client.room.num, client.name)
 			client.ws.Close()
 			client.testdeleteFromList()
 			return
@@ -203,7 +203,7 @@ func (testClient *TestClient) testdeleteFromList() {
 
 func main() {
 	e := echo.New()
-	e.Use(middleware.Logger())
+	// e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.GET("/", testsocket)
 	e.Logger.Fatal(e.Start(":80"))
