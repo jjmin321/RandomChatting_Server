@@ -39,6 +39,9 @@ var (
 	Testupgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
 	}
 )
 
@@ -51,18 +54,13 @@ func init() {
 }
 
 func testsocket(c echo.Context) error {
-	Testupgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	for {
-		ws, err := Testupgrader.Upgrade(c.Response(), c.Request(), nil)
-		if err != nil {
-			return err
-		}
-		go testhandleConnection(ws)
+	ws, err := Testupgrader.Upgrade(c.Response(), c.Request(), nil)
+	if err != nil {
+		log.Print("error occured! : ", err.Error())
+		return nil
 	}
-	return c.JSON(200, map[string]interface{}{
-		"status":  200,
-		"message": "접속 끊김 ㅃㅇ",
-	})
+	go testhandleConnection(ws)
+	return nil
 }
 
 func testhandleConnection(ws *websocket.Conn) {
@@ -97,7 +95,7 @@ func testhandleClient(client *TestClient) {
 }
 
 func testrecvFromClient(client *TestClient) {
-	// Read
+	// 메세지가 올 때까지 블록됩니다.
 	_, bytemsg, err := client.ws.ReadMessage()
 	if err != nil {
 		client.quit <- 0
@@ -208,7 +206,7 @@ func main() {
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{"*"},
-	  }))
+	}))
 	e.Use(middleware.Recover())
 	e.GET("/", testsocket)
 	e.Logger.Fatal(e.Start(":80"))
