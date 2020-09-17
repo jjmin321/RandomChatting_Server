@@ -57,10 +57,6 @@ func testsocket(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		err = ws.WriteMessage(websocket.TextMessage, []byte("안녕하세요 반갑습니다!"))
-		if err != nil {
-			c.Logger().Error(err)
-		}
 		go testhandleConnection(ws)
 	}
 	return c.JSON(200, map[string]interface{}{
@@ -130,12 +126,18 @@ func testrecvFromClient(client *TestClient) {
 		}
 		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
 		// testsendToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
-		// testsend
+		// testsendJoinMsgToClient(client.room, client.name)
 		room.clientlist.PushBack(*client)
 
 	case CHAT:
 		log.Printf("\n"+client.name+" 님의 메시지: %s\n", strmsgs[1])
 		client.read <- strmsgs[1]
+	}
+}
+
+func testsendJoinMsgToClient(room *TestRoom, participant string) {
+	for e := room.clientlist.Front(); e != nil; e = e.Next() {
+
 	}
 }
 
@@ -203,7 +205,10 @@ func (testClient *TestClient) testdeleteFromList() {
 
 func main() {
 	e := echo.New()
-	// e.Use(middleware.Logger())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{*},
+		AllowHeaders: []string{*},
+	  }))
 	e.Use(middleware.Recover())
 	e.GET("/", testsocket)
 	e.Logger.Fatal(e.Start(":80"))
