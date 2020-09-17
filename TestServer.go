@@ -206,8 +206,8 @@ func (testClient *TestClient) testdeleteFromList() {
 func main() {
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{*},
-		AllowHeaders: []string{*},
+		AllowOrigins: []string{"*"},
+		AllowHeaders: []string{"*"},
 	  }))
 	e.Use(middleware.Recover())
 	e.GET("/", testsocket)
