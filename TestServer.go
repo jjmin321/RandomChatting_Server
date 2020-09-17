@@ -57,6 +57,10 @@ func testsocket(c echo.Context) error {
 		if err != nil {
 			return err
 		}
+		err = ws.WriteMessage(websocket.TextMessage, []byte("안녕하세요 반갑습니다!"))
+		if err != nil {
+			c.Logger().Error(err)
+		}
 		go testhandleConnection(ws)
 	}
 	return c.JSON(200, map[string]interface{}{
@@ -199,7 +203,7 @@ func (testClient *TestClient) testdeleteFromList() {
 
 func main() {
 	e := echo.New()
-	// e.Use(middleware.Logger())
+	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.GET("/", testsocket)
 	e.Logger.Fatal(e.Start(":80"))
