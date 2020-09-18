@@ -12,6 +12,22 @@ import (
 	"github.com/labstack/echo/middleware"
 )
 
+// SocketServerMethod - 구현되어 있는 메서드 모음
+type SocketServerMethod interface {
+	init()
+	Socket()
+	HandleConnection()
+	HandleClient()
+	SendJoinMsgToClient()
+	SendToClient()
+	SendToRoomClients()
+	SendToAllClients()
+	AllocateEmptyRoom()
+	RecvMsgFromClient()
+	DeleteFromList()
+	DupUserCheck()
+}
+
 const (
 	// LOGIN : Magic Number for Chatting Login
 	LOGIN = "1"
@@ -23,26 +39,26 @@ const (
 	MAXCOUNT = 50
 )
 
-// TestClient - 채팅을 이용하는 사용자의 정보
-type TestClient struct {
+// Client - 채팅을 이용하는 사용자의 정보
+type Client struct {
 	ws   websocket.Conn
 	read chan string
 	quit chan int
 	name string
-	room *TestRoom
+	room *Room
 }
 
-// TestRoom - 채팅방 정보
-type TestRoom struct {
+// Room - 채팅방 정보
+type Room struct {
 	num        int
 	clientlist *list.List
 }
 
 var (
-	// Testroomlist - 이중 연결 리스트
-	Testroomlist *list.List
-	// Testupgrader - http 프로토콜을 ws 프로토콜로 바꿈
-	Testupgrader = &websocket.Upgrader{
+	// Roomlist - 이중 링크드 리스트
+	Roomlist *list.List
+	// Upgrader - http 프로토콜을 ws 프로토콜로 바꿈
+	Upgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
@@ -52,56 +68,59 @@ var (
 )
 
 func init() {
-	Testroomlist = list.New()
+	Roomlist = list.New()
 	for i := 0; i < MAXCOUNT; i++ {
-		room := &TestRoom{i + 1, list.New()}
-		Testroomlist.PushBack(*room)
+		room := &Room{i + 1, list.New()}
+		Roomlist.PushBack(*room)
 	}
 }
 
-func testsocket(c echo.Context) error {
-	ws, err := Testupgrader.Upgrade(c.Response(), c.Request(), nil)
+// Socket - 클라이언트가 접속한 HTTP 프로토콜을 WebSocket 프로토콜로 업그레이드 시킨 후, HandleConnection 쓰레드 시작.
+func Socket(c echo.Context) error {
+	ws, err := Upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		log.Print("error occured! : ", err.Error())
 		return nil
 	}
-	go testhandleConnection(ws)
+	go HandleConnection(ws)
 	return nil
 }
 
-func testhandleConnection(ws *websocket.Conn) {
+// HandleConnection - 클라이언트를 객체를 생성한 후, HandleClient 쓰레드 호출
+func HandleConnection(ws *websocket.Conn) {
 	read := make(chan string)
 	quit := make(chan int)
-	client := &TestClient{*ws, read, quit, "익명", &TestRoom{-1, list.New()}}
-	go testhandleClient(client)
+	client := &Client{*ws, read, quit, "익명", &Room{-1, list.New()}}
+	go HandleClient(client)
 	log.Printf("%s에서 채팅 서버에 입장하였습니다.\t", ws.RemoteAddr().String())
 }
 
-func testhandleClient(client *TestClient) {
+// HandleClient - RecvMsgFromClient 쓰레드를 호출하고, 클라이언트의 명령이 오면 메세지 전송, 채팅 종료 구문을 실행시킨다.
+func HandleClient(client *Client) {
 	for {
 		select {
 		case msg := <-client.read:
 			if strings.HasPrefix(msg, "[확성기]") {
-				testsendToAllClients(client.name, msg)
+				SendToAllClients(client.name, msg)
 			} else {
-				testsendToRoomClients(client.room, client.name, msg)
+				SendToRoomClients(client.room, client.name, msg)
 			}
 
 		case <-client.quit:
 			log.Printf("%s : %d번째 방의 %s님이 채팅 서버에서 나가셨습니다.", client.ws.RemoteAddr().String(), client.room.num, client.name)
 			client.ws.Close()
-			client.testdeleteFromList()
+			client.DeleteFromList()
 			return
 
 		default:
-			go testrecvFromClient(client)
+			go RecvMsgFromClient(client)
 			time.Sleep(1000 * time.Millisecond)
 		}
 	}
 }
 
-func testrecvFromClient(client *TestClient) {
-	// 메세지가 올 때까지 블록됩니다.
+// RecvMsgFromClient - 클라이언트에서 명령이 올 때까지 대기하다가 명령이 오면 채널을 통해 HandleClient에게 값을 전달, 방이 모두 찼거나 한 아이디가 두 번 이상 접속한 경우 연결을 종료시킴.
+func RecvMsgFromClient(client *Client) {
 	_, bytemsg, err := client.ws.ReadMessage()
 	if err != nil {
 		client.quit <- 0
@@ -116,21 +135,21 @@ func testrecvFromClient(client *TestClient) {
 	case LOGIN:
 		client.name = strings.TrimSpace(strmsgs[1])
 
-		room := testallocateEmptyRoom()
+		room := AllocateEmptyRoom()
 		if room.num < 1 {
 			client.ws.Close()
 			log.Print("방 인원이 다 찼습니다.")
 		}
 		client.room = room
 
-		if !client.testdupUserCheck() {
+		if !client.DupUserCheck() {
 			log.Print("닉네임이 중복됨!")
 			client.quit <- 0
 			return
 		}
 		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
-		// testsendToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
-		// testsendJoinMsgToClient(client.room, client.name)
+		// SendToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
+		// SendJoinMsgToClient(client.room, client.name)
 		room.clientlist.PushBack(*client)
 
 	case CHAT:
@@ -139,54 +158,59 @@ func testrecvFromClient(client *TestClient) {
 	}
 }
 
-func testsendJoinMsgToClient(room *TestRoom, participant string) {
+// SendJoinMsgToClient - 클라이언트가 연결된 후 방이 배정되면 해당 방에 입장하였습니다 메세지를 전송.
+func SendJoinMsgToClient(room *Room, participant string) {
 	for e := room.clientlist.Front(); e != nil; e = e.Next() {
-
+		c := e.Value.(Client)
 	}
 }
 
-func testsendToRoomClients(room *TestRoom, sender string, msg string) {
-	for e := room.clientlist.Front(); e != nil; e = e.Next() {
-		c := e.Value.(TestClient)
-		testsendToClient(&c, sender, msg)
-	}
-}
-
-func testsendToAllClients(sender string, msg string) {
-	for re := Testroomlist.Front(); re != nil; re = re.Next() {
-		r := re.Value.(TestRoom)
-		for e := r.clientlist.Front(); e != nil; e = e.Next() {
-			c := e.Value.(TestClient)
-			testsendToClient(&c, sender, msg)
-		}
-	}
-}
-
-func testsendToClient(client *TestClient, sender string, msg string) {
+// SendToClient - 클라이언트에게 웹소켓을 통해 메세지를 전송
+func SendToClient(client *Client, sender string, msg string) {
 	chatting := sender + " : " + msg
 	err := client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
 	if err != nil {
-		log.Print("167번째 줄 채팅 보내기 에러")
+		log.Print("채팅 전송 중 에러 발생")
 	}
 	log.Printf("%s님에게 전송된 메세지 : %s", client.name, chatting)
 }
 
-func testallocateEmptyRoom() *TestRoom {
-	for e := Testroomlist.Front(); e != nil; e = e.Next() {
-		r := e.Value.(TestRoom)
+// SendToRoomClients - 이중링크드리스트를 순회하여 클라이언트의 방 인덱스를 찾은 뒤, 방 인덱스와 메세지를 SendToClient에게 전달한다.
+func SendToRoomClients(room *Room, sender string, msg string) {
+	for e := room.clientlist.Front(); e != nil; e = e.Next() {
+		c := e.Value.(Client)
+		SendToClient(&c, sender, msg)
+	}
+}
+
+// SendToAllClients - 이중링크드리스트를 순회하여 존재하는 모든 클라이언트의 방 인덱스를 찾은 뒤, 방 인덱스와 메세지를 SendToClient에게 전달한다.
+func SendToAllClients(sender string, msg string) {
+	for re := Roomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(Room)
+		for e := r.clientlist.Front(); e != nil; e = e.Next() {
+			c := e.Value.(Client)
+			SendToClient(&c, sender, msg)
+		}
+	}
+}
+
+// AllocateEmptyRoom - 이중링크드리스트를 오름차순으로 순회하며 유저가 2명이 아닌 리스트를 배정, 모든 방에 유저가 찼으면 접속하지 못함.
+func AllocateEmptyRoom() *Room {
+	for e := Roomlist.Front(); e != nil; e = e.Next() {
+		r := e.Value.(Room)
 		if r.clientlist.Len() < MAXUSER {
 			return &r
 		}
 	}
-	// 방 다참
-	return &TestRoom{-1, list.New()}
+	return &Room{-1, list.New()}
 }
 
-func (client *TestClient) testdupUserCheck() bool {
-	for re := Testroomlist.Front(); re != nil; re = re.Next() {
-		r := re.Value.(TestRoom)
+// DupUserCheck - 중복되는 닉네임이 이미 채팅에 접속되어 있을 경우 입장시키지 않음.
+func (client *Client) DupUserCheck() bool {
+	for re := Roomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
-			c := e.Value.(TestClient)
+			c := e.Value.(Client)
 			if strings.Compare(client.name, c.name) == 0 {
 				return false
 			}
@@ -195,12 +219,13 @@ func (client *TestClient) testdupUserCheck() bool {
 	return true
 }
 
-func (testClient *TestClient) testdeleteFromList() {
-	for re := Testroomlist.Front(); re != nil; re = re.Next() {
-		r := re.Value.(TestRoom)
+// DeleteFromList - 클라이언트의 접속이 끊어지면 링크드리스트에서도 삭제함.
+func (client *Client) DeleteFromList() {
+	for re := Roomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
-			c := e.Value.(TestClient)
-			if testClient.ws.RemoteAddr() == c.ws.RemoteAddr() {
+			c := e.Value.(Client)
+			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
 				r.clientlist.Remove(e)
 			}
 		}
@@ -214,6 +239,6 @@ func main() {
 		AllowHeaders: []string{"*"},
 	}))
 	e.Use(middleware.Recover())
-	e.GET("/", testsocket)
+	e.GET("/", Socket)
 	e.Logger.Fatal(e.Start(":80"))
 }
