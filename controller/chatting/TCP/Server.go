@@ -18,7 +18,8 @@ const (
 	roomMaxCount = 50
 )
 
-type client struct {
+// Client - 채팅을 이용하는 사용자의 정보
+type Client struct {
 	connection net.Conn
 	read       chan string
 	quit       chan int
@@ -26,7 +27,8 @@ type client struct {
 	room       *Room
 }
 
-type room struct {
+// Room - 채팅방
+type Room struct {
 	num        int
 	clientlist *list.List
 }
@@ -35,7 +37,7 @@ var roomlist *list.List
 
 func main() {
 	roomlist = list.New()
-	for i := 0; i < ROOM_MAX_COUNT; i++ {
+	for i := 0; i < roomMaxCount; i++ {
 		room := &Room{i + 1, list.New()}
 		roomlist.PushBack(*room)
 	}
@@ -112,7 +114,7 @@ func recvFromClient(client *Client) {
 	strmsgs := strings.Split(recvmsg, "|")
 
 	switch strmsgs[0] {
-	case LOGIN:
+	case login:
 		client.name = strings.TrimSpace(strmsgs[1])
 
 		room := allocateEmptyRoom()
@@ -130,7 +132,7 @@ func recvFromClient(client *Client) {
 		sendToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
 		room.clientlist.PushBack(*client)
 
-	case CHAT:
+	case chat:
 		log.Printf("\n"+client.name+" 님의 메시지: %s\n", strmsgs[1])
 		client.read <- strmsgs[1]
 	}
@@ -188,7 +190,7 @@ func (client *Client) dupUserCheck() bool {
 func allocateEmptyRoom() *Room {
 	for e := roomlist.Front(); e != nil; e = e.Next() {
 		r := e.Value.(Room)
-		if r.clientlist.Len() < ROOM_MAX_USER {
+		if r.clientlist.Len() < roomMaxUser {
 			return &r
 		}
 	}

@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	login = "1"
-	chat  = "2"
+	clientLogin = "1"
+	clientChat  = "2"
 )
 
-func main() {
+func clientMain() {
 	connection, err := net.Dial("tcp", "127.0.0.1:5000")
 	if err != nil {
 		handleErrorClient(connection, "채팅 서버에 연결하는 데 실패하였습니다.")
@@ -31,7 +31,7 @@ func main() {
 		handleErrorClient(connection, "닉네임을 읽는 데 실패하였습니다.")
 	}
 
-	fmt.Fprintf(connection, "%s|%s", LOGIN, name)
+	fmt.Fprintf(connection, "%s|%s", clientLogin, name)
 
 	go handleRecvMsg(connection, message)
 	handleSendMsg(connection)
@@ -53,7 +53,7 @@ func handleSendMsg(conn net.Conn) {
 			handleErrorClient(conn, "메세지를 읽는 데 실패하였습니다.")
 		}
 
-		fmt.Fprintf(conn, "%s|%s", CHAT, text)
+		fmt.Fprintf(conn, "%s|%s", clientChat, text)
 	}
 }
 
