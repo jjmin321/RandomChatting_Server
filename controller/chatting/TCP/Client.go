@@ -31,10 +31,8 @@ func main() {
 		handleErrorClient(connection, "닉네임을 읽는 데 실패하였습니다.")
 	}
 
-	// login
 	fmt.Fprintf(connection, "%s|%s", LOGIN, name)
 
-	// chat
 	go handleRecvMsg(connection, message)
 	handleSendMsg(connection)
 }

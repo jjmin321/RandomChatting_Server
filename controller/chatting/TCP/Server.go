@@ -18,7 +18,6 @@ const (
 	ROOM_MAX_COUNT = 50
 )
 
-// Client - 채팅을 이용하는 사용자의 정보
 type Client struct {
 	connection net.Conn
 	read       chan string
@@ -27,7 +26,6 @@ type Client struct {
 	room       *Room
 }
 
-// Room - 채팅방
 type Room struct {
 	num        int
 	clientlist *list.List
