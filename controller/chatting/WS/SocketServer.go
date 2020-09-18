@@ -67,6 +67,7 @@ var (
 	}
 )
 
+// Init - 50개 채팅방 초기화
 func init() {
 	Roomlist = list.New()
 	for i := 0; i < MAXCOUNT; i++ {
