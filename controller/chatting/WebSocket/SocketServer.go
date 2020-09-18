@@ -2,9 +2,10 @@ package main
 
 import (
 	"container/list"
-	"fmt"
 	"log"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
@@ -18,61 +19,195 @@ const (
 	ROOM_MAX_COUNT = 50
 )
 
-// Client - 채팅을 이용하는 사용자의 정보
-type Client struct {
-	connection websocket.Conn
-	read       chan string
-	quit       chan int
-	name       string
-	room       *Room
+// TestClient - 채팅을 이용하는 사용자의 정보
+type TestClient struct {
+	ws   websocket.Conn
+	read chan string
+	quit chan int
+	name string
+	room *TestRoom
 }
 
-// Room - 채팅방 정보
-type Room struct {
+// TestRoom - 채팅방 정보
+type TestRoom struct {
 	num        int
 	clientlist *list.List
 }
 
 var (
-	roomlist *list.List
-	upgrader = &websocket.Upgrader{
+	Testroomlist *list.List
+	Testupgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
 	}
 )
 
 func init() {
+	Testroomlist = list.New()
+	for i := 0; i < ROOM_MAX_COUNT; i++ {
+		room := &TestRoom{i + 1, list.New()}
+		Testroomlist.PushBack(*room)
+	}
+}
+
+func testsocket(c echo.Context) error {
+	ws, err := Testupgrader.Upgrade(c.Response(), c.Request(), nil)
+	if err != nil {
+		log.Print("error occured! : ", err.Error())
+		return nil
+	}
+	go testhandleConnection(ws)
+	return nil
+}
+
+func testhandleConnection(ws *websocket.Conn) {
+	read := make(chan string)
+	quit := make(chan int)
+	client := &TestClient{*ws, read, quit, "익명", &TestRoom{-1, list.New()}}
+	go testhandleClient(client)
+	log.Printf("%s에서 채팅 서버에 입장하였습니다.\t", ws.RemoteAddr().String())
+}
+
+func testhandleClient(client *TestClient) {
+	for {
+		select {
+		case msg := <-client.read:
+			if strings.HasPrefix(msg, "[확성기]") {
+				testsendToAllClients(client.name, msg)
+			} else {
+				testsendToRoomClients(client.room, client.name, msg)
+			}
+
+		case <-client.quit:
+			log.Printf("%s : %d번째 방의 %s님이 채팅 서버에서 나가셨습니다.", client.ws.RemoteAddr().String(), client.room.num, client.name)
+			client.ws.Close()
+			client.testdeleteFromList()
+			return
+
+		default:
+			go testrecvFromClient(client)
+			time.Sleep(1000 * time.Millisecond)
+		}
+	}
+}
+
+func testrecvFromClient(client *TestClient) {
+	// 메세지가 올 때까지 블록됩니다.
+	_, bytemsg, err := client.ws.ReadMessage()
+	if err != nil {
+		client.quit <- 0
+		return
+	}
+	msg := string(bytemsg)
+	log.Print("1 : 로그인, 2 : 채팅 ", msg)
+
+	strmsgs := strings.Split(msg, "|")
+
+	switch strmsgs[0] {
+	case LOGIN:
+		client.name = strings.TrimSpace(strmsgs[1])
+
+		room := testallocateEmptyRoom()
+		if room.num < 1 {
+			client.ws.Close()
+			log.Print("방 인원이 다 찼습니다.")
+		}
+		client.room = room
+
+		if !client.testdupUserCheck() {
+			log.Print("닉네임이 중복됨!")
+			client.quit <- 0
+			return
+		}
+		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
+		// testsendToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
+		// testsendJoinMsgToClient(client.room, client.name)
+		room.clientlist.PushBack(*client)
+
+	case CHAT:
+		log.Printf("\n"+client.name+" 님의 메시지: %s\n", strmsgs[1])
+		client.read <- strmsgs[1]
+	}
+}
+
+func testsendJoinMsgToClient(room *TestRoom, participant string) {
+	for e := room.clientlist.Front(); e != nil; e = e.Next() {
+
+	}
+}
+
+func testsendToRoomClients(room *TestRoom, sender string, msg string) {
+	for e := room.clientlist.Front(); e != nil; e = e.Next() {
+		c := e.Value.(TestClient)
+		testsendToClient(&c, sender, msg)
+	}
+}
+
+func testsendToAllClients(sender string, msg string) {
+	for re := Testroomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(TestRoom)
+		for e := r.clientlist.Front(); e != nil; e = e.Next() {
+			c := e.Value.(TestClient)
+			testsendToClient(&c, sender, msg)
+		}
+	}
+}
+
+func testsendToClient(client *TestClient, sender string, msg string) {
+	chatting := sender + " : " + msg
+	err := client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
+	if err != nil {
+		log.Print("167번째 줄 채팅 보내기 에러")
+	}
+	log.Printf("%s님에게 전송된 메세지 : %s", client.name, chatting)
+}
+
+func testallocateEmptyRoom() *TestRoom {
+	for e := Testroomlist.Front(); e != nil; e = e.Next() {
+		r := e.Value.(TestRoom)
+		if r.clientlist.Len() < ROOM_MAX_USER {
+			return &r
+		}
+	}
+	// 방 다참
+	return &TestRoom{-1, list.New()}
+}
+
+func (client *TestClient) testdupUserCheck() bool {
+	for re := Testroomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(TestRoom)
+		for e := r.clientlist.Front(); e != nil; e = e.Next() {
+			c := e.Value.(TestClient)
+			if strings.Compare(client.name, c.name) == 0 {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (testClient *TestClient) testdeleteFromList() {
+	for re := Testroomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(TestRoom)
+		for e := r.clientlist.Front(); e != nil; e = e.Next() {
+			c := e.Value.(TestClient)
+			if testClient.ws.RemoteAddr() == c.ws.RemoteAddr() {
+				r.clientlist.Remove(e)
+			}
+		}
+	}
+}
+
+func main() {
 	e := echo.New()
-	e.Use(middleware.Logger())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowHeaders: []string{"*"},
+	}))
 	e.Use(middleware.Recover())
-	e.GET("/", socket)
+	e.GET("/", testsocket)
 	e.Logger.Fatal(e.Start(":80"))
 }
-
-func socket(c echo.Context) error {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
-	if err != nil {
-		return err
-	}
-	log.Print("채팅 서버를 80번 포트에 열었습니다.")
-	defer ws.Close()
-
-	for {
-		// Write
-		err := ws.WriteMessage(websocket.TextMessage, []byte("Hello, Client!"))
-		if err != nil {
-			c.Logger().Error(err)
-		}
-
-		// Read
-		_, msg, err := ws.ReadMessage()
-		if err != nil {
-			c.Logger().Error(err)
-		}
-		fmt.Printf("%s\n", msg)
-	}
-}
-
-// func main() {
-// }
