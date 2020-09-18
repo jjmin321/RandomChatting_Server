@@ -13,10 +13,14 @@ import (
 )
 
 const (
-	LOGIN          = "1"
-	CHAT           = "2"
-	ROOM_MAX_USER  = 2
-	ROOM_MAX_COUNT = 50
+	// LOGIN : Magic Number for Chatting Login
+	LOGIN = "1"
+	// CHAT : Magic Number for Chatting
+	CHAT = "2"
+	// MAXUSER : Magic Number for Chatting room max user
+	MAXUSER = 2
+	// MAXCOUNT : Magic Number for Chatting room max count
+	MAXCOUNT = 50
 )
 
 // TestClient - 채팅을 이용하는 사용자의 정보
@@ -35,7 +39,9 @@ type TestRoom struct {
 }
 
 var (
+	// Testroomlist - 이중 연결 리스트
 	Testroomlist *list.List
+	// Testupgrader - http 프로토콜을 ws 프로토콜로 바꿈
 	Testupgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -47,7 +53,7 @@ var (
 
 func init() {
 	Testroomlist = list.New()
-	for i := 0; i < ROOM_MAX_COUNT; i++ {
+	for i := 0; i < MAXCOUNT; i++ {
 		room := &TestRoom{i + 1, list.New()}
 		Testroomlist.PushBack(*room)
 	}
@@ -168,7 +174,7 @@ func testsendToClient(client *TestClient, sender string, msg string) {
 func testallocateEmptyRoom() *TestRoom {
 	for e := Testroomlist.Front(); e != nil; e = e.Next() {
 		r := e.Value.(TestRoom)
-		if r.clientlist.Len() < ROOM_MAX_USER {
+		if r.clientlist.Len() < MAXUSER {
 			return &r
 		}
 	}

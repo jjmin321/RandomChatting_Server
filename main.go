@@ -12,5 +12,8 @@ func main() {
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{"*"},
 	}))
+	e.Use(middleware.Recover())
+	e.GET("/", )
+	e.Logger.Fatal(e.Start(":80"))
 	e.Logger.Fatal(e.Start(:8080))
 }
