@@ -12,13 +12,13 @@ import (
 )
 
 const (
-	LOGIN          = "1"
-	CHAT           = "2"
-	ROOM_MAX_USER  = 2
-	ROOM_MAX_COUNT = 50
+	login        = "1"
+	chat         = "2"
+	roomMaxUser  = 2
+	roomMaxCount = 50
 )
 
-type Client struct {
+type client struct {
 	connection net.Conn
 	read       chan string
 	quit       chan int
@@ -26,7 +26,7 @@ type Client struct {
 	room       *Room
 }
 
-type Room struct {
+type room struct {
 	num        int
 	clientlist *list.List
 }

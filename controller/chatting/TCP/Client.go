@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	LOGIN = "1"
-	CHAT  = "2"
+	login = "1"
+	chat  = "2"
 )
 
 func main() {
