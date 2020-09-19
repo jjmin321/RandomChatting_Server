@@ -1,4 +1,4 @@
-package socket
+package chattingserver
 
 import (
 	"container/list"

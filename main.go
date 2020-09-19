@@ -1,8 +1,13 @@
 package main
 
-import "github.com/labstack/echo"
+import (
+	socket "RandomChatting_Server/controller/chatting/Socket"
 
-type mainMethod interface{
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+)
+
+type mainMethod interface {
 	main()
 }
 
@@ -13,7 +18,6 @@ func main() {
 		AllowHeaders: []string{"*"},
 	}))
 	e.Use(middleware.Recover())
-	e.GET("/", )
+	e.GET("/", socket.Socket)
 	e.Logger.Fatal(e.Start(":80"))
-	e.Logger.Fatal(e.Start(:8080))
 }
