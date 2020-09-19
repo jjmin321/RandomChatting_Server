@@ -1,7 +1,7 @@
 package main
 
 import (
-	socket "RandomChatting_Server/controller/chatting/Socket"
+	"RandomChatting_Server/controller/chattingserver"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -18,6 +18,6 @@ func main() {
 		AllowHeaders: []string{"*"},
 	}))
 	e.Use(middleware.Recover())
-	e.GET("/", socket.Socket)
+	e.GET("/chatting", chattingserver.Socket)
 	e.Logger.Fatal(e.Start(":80"))
 }
