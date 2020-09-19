@@ -150,7 +150,7 @@ func RecvMsgFromClient(client *Client) {
 		}
 		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
 		// sendMsgToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
-		// SendJoinMsgToClient(client.room, client.name)
+		SendJoinMsgToClient(client.room, client.name)
 		room.clientlist.PushBack(*client)
 
 	case CHAT:
@@ -160,9 +160,15 @@ func RecvMsgFromClient(client *Client) {
 }
 
 // SendJoinMsgToClient - 클라이언트가 연결된 후 방이 배정되면 해당 방에 입장하였습니다 메세지를 전송.
-func SendJoinMsgToClient(room *Room, participant string) {
+func SendJoinMsgToClient(room *Room, sender string) {
+	chatting := sender + "님이 입장하였습니다"
 	for e := room.clientlist.Front(); e != nil; e = e.Next() {
 		c := e.Value.(Client)
+		err := c.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
+		if err != nil {
+			log.Print("입장 채팅 전송 중 에러 발생")
+		}
+		log.Printf("%d방에 전송된 입장 메세지 : %s", room.num, chatting)
 	}
 }
 

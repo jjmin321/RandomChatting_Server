@@ -13,3 +13,6 @@
 echo: http: response.Write on hijacked connection from github.com/labstack/echo.(*Response).Write (response.go:75) 에러를 성공적으로 해결했다.
 126번째 줄에 testsendToJoinMsgToClient 메서드를 호출하는 코드를 생성해야 함.
 testsendToJoinMsgToClient 메서드를 만들어야함. 
+
+### 9월 18일 
+162번째 줄 수정
