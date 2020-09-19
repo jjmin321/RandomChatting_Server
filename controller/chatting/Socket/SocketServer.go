@@ -1,4 +1,4 @@
-package ws
+package socket
 
 import (
 	"container/list"
@@ -9,11 +9,10 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 )
 
-// SocketServerMethod - 구현되어 있는 메서드 모음
-type SocketServerMethod interface {
+// socketServerMethod - 구현되어 있는 메서드 모음
+type socketServerMethod interface {
 	init()
 	Socket()
 	HandleConnection()
@@ -41,7 +40,7 @@ const (
 
 // Client - 채팅을 이용하는 사용자의 정보
 type Client struct {
-	ws   websocket.Conn
+	ws   *websocket.Conn
 	read chan string
 	quit chan int
 	name string
@@ -91,7 +90,7 @@ func Socket(c echo.Context) error {
 func HandleConnection(ws *websocket.Conn) {
 	read := make(chan string)
 	quit := make(chan int)
-	client := &Client{*ws, read, quit, "익명", &Room{-1, list.New()}}
+	client := &Client{ws, read, quit, "익명", &Room{-1, list.New()}}
 	go HandleClient(client)
 	log.Printf("%s에서 채팅 서버에 입장하였습니다.\t", ws.RemoteAddr().String())
 }
@@ -237,15 +236,4 @@ func (client *Client) DeleteFromList() {
 			}
 		}
 	}
-}
-
-func main() {
-	e := echo.New()
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*"},
-		AllowHeaders: []string{"*"},
-	}))
-	e.Use(middleware.Recover())
-	e.GET("/", Socket)
-	e.Logger.Fatal(e.Start(":80"))
 }
