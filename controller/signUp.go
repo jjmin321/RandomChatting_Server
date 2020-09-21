@@ -28,7 +28,7 @@ func SignUp(c echo.Context) error {
 			"message": "모든 값을 입력해주세요",
 		})
 	}
-	err := model.FindMember(u.Name)
+	err := model.CheckDupName(u.Name)
 	if err == nil {
 		return c.JSON(400, map[string]interface{}{
 			"status":  400,
