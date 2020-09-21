@@ -63,7 +63,7 @@ func VerifyAccessToken(next echo.HandlerFunc) echo.HandlerFunc {
 		claims := token.Claims.(jwt.MapClaims)
 		Name := claims["Name"].(string)
 		Pw := claims["Pw"].(string)
-		c.Set("ID", ID)
+		c.Set("Name", Name)
 		c.Set("Pw", Pw)
 		return next(c)
 	}
