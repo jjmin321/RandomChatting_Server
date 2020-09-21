@@ -5,6 +5,7 @@ import (
 	"RandomChatting_Server/controller/chattingserver"
 	"RandomChatting_Server/database"
 
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )

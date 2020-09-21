@@ -1,9 +1,0 @@
-[app]
-name = "Randomchatting"
-
-[database]
-name = "Randomchatting"
-username = "jjmin321"
-password = "qwerz123"
-host = "127.0.0.1"
-port = "5432"
