@@ -2,6 +2,7 @@ package main
 
 import (
 	"RandomChatting_Server/config"
+	"RandomChatting_Server/controller"
 	"RandomChatting_Server/controller/chattingserver"
 	"RandomChatting_Server/database"
 
@@ -24,5 +25,7 @@ func main() {
 	}))
 	e.Use(middleware.Recover())
 	e.GET("/chatting", chattingserver.Socket)
+	e.POST("/signIn", controller.SignIn)
+	e.POST("/signUp", controller.SignUp)
 	e.Logger.Fatal(e.Start(":80"))
 }
