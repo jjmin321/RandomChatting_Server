@@ -1,3 +1,4 @@
 go.sum
 go.mod
 image/
+controller/chattingserver/TCP/
