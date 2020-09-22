@@ -23,7 +23,7 @@ func SignIn(c echo.Context) error {
 	if err := c.Bind(u); err != nil {
 		return err
 	}
-	err := model.FindMember(u.Name, u.Pw)
+	_, err := model.FindMember(u.Name, u.Pw)
 	if err != nil {
 		return c.JSON(400, map[string]interface{}{
 			"status":  400,
