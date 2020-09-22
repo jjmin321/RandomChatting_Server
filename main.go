@@ -26,6 +26,7 @@ func main() {
 	}))
 	e.Use(middleware.Recover())
 	e.GET("/chatting", chattingserver.Socket)
+	e.GET("/getInfo", controller.GetInfo, middleware.JWT([]byte("secret")), lib.VerifyAccessToken)
 	e.POST("/signIn", controller.SignIn)
 	e.POST("/signUp", controller.SignUp)
 	e.PUT("/putImage", controller.PutImage, middleware.JWT([]byte("secret")), lib.VerifyAccessToken)
