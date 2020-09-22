@@ -7,6 +7,10 @@ import (
 	"github.com/labstack/echo"
 )
 
+type signInMethod interface {
+	SignIn()
+}
+
 // SignInParam - 파라미터 형식 정의 구조체
 type SignInParam struct {
 	Name string `json:"name" form:"name" query:"name"`
