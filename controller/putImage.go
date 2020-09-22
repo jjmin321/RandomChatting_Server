@@ -10,6 +10,10 @@ import (
 	"github.com/labstack/echo"
 )
 
+type putImageMethod interface {
+	PutImage()
+}
+
 // PutImage - 프로필 사진 등록
 func PutImage(c echo.Context) error {
 	Name := c.Get("Name").(string)
