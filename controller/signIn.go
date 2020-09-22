@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"RandomChatting_Server/lib/jwt"
+	"RandomChatting_Server/lib"
 	"RandomChatting_Server/model"
 
 	"github.com/labstack/echo"
@@ -30,8 +30,8 @@ func SignIn(c echo.Context) error {
 			"message": "해당 정보에 맞는 유저가 없습니다",
 		})
 	}
-	refreshToken, err := jwt.CreateRefreshToken(u.Name, u.Pw)
-	accessToken, err2 := jwt.CreateAccessToken(u.Name, u.Pw)
+	refreshToken, err := lib.CreateRefreshToken(u.Name, u.Pw)
+	accessToken, err2 := lib.CreateAccessToken(u.Name, u.Pw)
 	if err != nil || err2 != nil {
 		return c.JSON(500, map[string]interface{}{
 			"status":  500,

@@ -5,7 +5,7 @@ import (
 	"RandomChatting_Server/controller"
 	"RandomChatting_Server/controller/chattingserver"
 	"RandomChatting_Server/database"
-	"RandomChatting_Server/lib/jwt"
+	"RandomChatting_Server/lib"
 
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo"
@@ -28,6 +28,6 @@ func main() {
 	e.GET("/chatting", chattingserver.Socket)
 	e.POST("/signIn", controller.SignIn)
 	e.POST("/signUp", controller.SignUp)
-	e.PUT("/putImage", controller.PutImage, middleware.JWT([]byte("secret")), jwt.VerifyAccessToken)
+	e.PUT("/putImage", controller.PutImage, middleware.JWT([]byte("secret")), lib.VerifyAccessToken)
 	e.Logger.Fatal(e.Start(":80"))
 }
