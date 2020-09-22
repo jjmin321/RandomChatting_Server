@@ -31,7 +31,7 @@ func PutImage(c echo.Context) error {
 			"message": "파일을 여는 데 실패하였습니다. 다시 시도해주세요.",
 		})
 	}
-	dst, err := lib.CreateFile(Name, file)
+	dst, fileName, err := lib.CreateFile(Name, file)
 	defer dst.Close()
 	if err != nil {
 		return c.JSON(500, map[string]interface{}{
@@ -45,7 +45,7 @@ func PutImage(c echo.Context) error {
 			"message": "파일을 저장하는 데 실패하였습니다. 다시 시도해주세요.",
 		})
 	}
-	err = model.UpdateImage(Name, Pw, dst.Name())
+	err = model.UpdateImage(Name, Pw, fileName)
 	if err != nil {
 		return c.JSON(500, map[string]interface{}{
 			"status":  500,
