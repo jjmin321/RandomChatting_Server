@@ -1,6 +1,8 @@
 package model
 
-import "RandomChatting_Server/database"
+import (
+	"RandomChatting_Server/database"
+)
 
 // UpdateImage : 멤버 찾기
 func UpdateImage(Name, Pw, fileName string) error {
