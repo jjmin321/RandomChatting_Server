@@ -15,10 +15,10 @@ type jwtMethod interface {
 }
 
 // CreateRefreshToken : 리프레시 토큰 생성
-func CreateRefreshToken(Name, Pw string) (string, error) {
+func CreateRefreshToken(ID, Pw string) (string, error) {
 	refreshToken := jwt.New(jwt.SigningMethodHS256)
 	claims := refreshToken.Claims.(jwt.MapClaims)
-	claims["Name"] = Name
+	claims["ID"] = ID
 	claims["Pw"] = Pw
 	claims["exp"] = time.Now().Add(time.Hour * 720).Unix()
 
@@ -30,10 +30,10 @@ func CreateRefreshToken(Name, Pw string) (string, error) {
 }
 
 // CreateAccessToken : 액세스 토큰 생성
-func CreateAccessToken(Name, Pw string) (string, error) {
+func CreateAccessToken(ID, Pw string) (string, error) {
 	accessToken := jwt.New(jwt.SigningMethodHS256)
 	claims := accessToken.Claims.(jwt.MapClaims)
-	claims["Name"] = Name
+	claims["ID"] = ID
 	claims["Pw"] = Pw
 	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
 	t, err := accessToken.SignedString([]byte("secret"))
@@ -48,9 +48,9 @@ func VerifyRefreshToken(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		token := c.Get("user").(*jwt.Token)
 		claims := token.Claims.(jwt.MapClaims)
-		Name := claims["Name"].(string)
+		ID := claims["ID"].(string)
 		Pw := claims["Pw"].(string)
-		c.Set("Name", Name)
+		c.Set("ID", ID)
 		c.Set("Pw", Pw)
 		return next(c)
 	}
@@ -61,9 +61,9 @@ func VerifyAccessToken(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		token := c.Get("user").(*jwt.Token)
 		claims := token.Claims.(jwt.MapClaims)
-		Name := claims["Name"].(string)
+		ID := claims["ID"].(string)
 		Pw := claims["Pw"].(string)
-		c.Set("Name", Name)
+		c.Set("ID", ID)
 		c.Set("Pw", Pw)
 		return next(c)
 	}
