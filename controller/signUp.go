@@ -12,8 +12,9 @@ type signUpMethod interface {
 
 // SignUpParam - 파라미터 형식 정의 구조체
 type SignUpParam struct {
-	Name string `json:"name" form:"name" query:"name"`
+	ID   string `json:"id" form:"id" query:"id"`
 	Pw   string `json:"pw" form:"pw" query:"pw"`
+	Name string `json:"name" form:"name" query:"name"`
 }
 
 // SignUp - 회원가입 API
@@ -22,20 +23,27 @@ func SignUp(c echo.Context) error {
 	if err := c.Bind(u); err != nil {
 		return err
 	}
-	if u.Name == "" || u.Pw == "" {
+	if u.ID == "" || u.Name == "" || u.Pw == "" {
 		return c.JSON(400, map[string]interface{}{
 			"status":  400,
 			"message": "모든 값을 입력해주세요",
 		})
 	}
-	err := model.CheckDupName(u.Name)
+	err := model.CheckDupID(u.ID)
+	if err == nil {
+		return c.JSON(400, map[string]interface{}{
+			"status":  400,
+			"message": "이미 사용중인 아이디입니다",
+		})
+	}
+	err = model.CheckDupName(u.Name)
 	if err == nil {
 		return c.JSON(400, map[string]interface{}{
 			"status":  400,
 			"message": "이미 사용중인 닉네임입니다",
 		})
 	}
-	err = model.CreateMember(u.Name, u.Pw)
+	err = model.CreateMember(u.ID, u.Name, u.Pw)
 	if err != nil {
 		return c.JSON(500, map[string]interface{}{
 			"status":  500,
