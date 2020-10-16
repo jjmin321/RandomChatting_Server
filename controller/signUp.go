@@ -52,6 +52,6 @@ func SignUp(c echo.Context) error {
 	}
 	return c.JSON(200, map[string]interface{}{
 		"status":  200,
-		"message": "멤버 생성 완료",
+		"message": "회원가입 완료",
 	})
 }
