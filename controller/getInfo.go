@@ -12,9 +12,9 @@ type getInfoMethod interface {
 
 // GetInfo - 유저 정보 읽기 API
 func GetInfo(c echo.Context) error {
-	Name := c.Get("Name").(string)
+	ID := c.Get("ID").(string)
 	Pw := c.Get("Pw").(string)
-	Member, err := model.FindMember(Name, Pw)
+	Member, err := model.FindMember(ID, Pw)
 	if err != nil {
 		return c.JSON(500, map[string]interface{}{
 			"status":  500,
