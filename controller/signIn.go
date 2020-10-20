@@ -30,18 +30,16 @@ func SignIn(c echo.Context) error {
 			"message": "해당 정보에 맞는 유저가 없습니다",
 		})
 	}
-	refreshToken, err := lib.CreateRefreshToken(u.ID, u.Pw)
-	accessToken, err2 := lib.CreateAccessToken(u.ID, u.Pw)
-	if err != nil || err2 != nil {
+	accessToken, err := lib.CreateAccessToken(u.ID, u.Pw)
+	if err != nil {
 		return c.JSON(500, map[string]interface{}{
 			"status":  500,
 			"message": "토큰 생성 중 오류",
 		})
 	}
 	return c.JSON(200, map[string]interface{}{
-		"status":       200,
-		"message":      "로그인 성공",
-		"refreshToken": refreshToken,
-		"accessToken":  accessToken,
+		"status":      200,
+		"message":     "로그인 성공",
+		"accessToken": accessToken,
 	})
 }
