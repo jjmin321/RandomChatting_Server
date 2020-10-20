@@ -18,7 +18,7 @@ func CreateAccessToken(ID, Pw string) (string, error) {
 	claims := accessToken.Claims.(jwt.MapClaims)
 	claims["ID"] = ID
 	claims["Pw"] = Pw
-	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
+	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 	t, err := accessToken.SignedString([]byte("secret"))
 	if err != nil {
 		return "", err
