@@ -18,9 +18,9 @@ type socketServerMethod interface {
 	HandleConnection()
 	HandleClient()
 	SendJoinMsgToClient()
-	sendMsgToClient()
-	sendMsgToRoomClients()
-	sendMsgToAllClients()
+	SendMsgToClient()
+	SendMsgToRoomClients()
+	SendMsgToAllClients()
 	AllocateEmptyRoom()
 	RecvMsgFromClient()
 	DeleteFromList()
@@ -101,9 +101,9 @@ func HandleClient(client *Client) {
 		select {
 		case msg := <-client.read:
 			if strings.HasPrefix(msg, "[확성기]") {
-				sendMsgToAllClients(client.name, msg)
+				SendMsgToAllClients(client.name, msg)
 			} else {
-				sendMsgToRoomClients(client.room, client.name, msg)
+				SendMsgToRoomClients(client.room, client.name, msg)
 			}
 
 		case <-client.quit:
@@ -148,7 +148,7 @@ func RecvMsgFromClient(client *Client) {
 			return
 		}
 		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
-		// sendMsgToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
+		// SendMsgToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
 		SendJoinMsgToClient(client.room, client.name)
 		room.clientlist.PushBack(*client)
 
@@ -171,8 +171,8 @@ func SendJoinMsgToClient(room *Room, sender string) {
 	}
 }
 
-// sendMsgToClient - 클라이언트에게 웹소켓을 통해 메세지를 전송
-func sendMsgToClient(client *Client, sender string, msg string) {
+// SendMsgToClient - 클라이언트에게 웹소켓을 통해 메세지를 전송
+func SendMsgToClient(client *Client, sender string, msg string) {
 	chatting := sender + " : " + msg
 	err := client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
 	if err != nil {
@@ -181,21 +181,21 @@ func sendMsgToClient(client *Client, sender string, msg string) {
 	log.Printf("%s님에게 전송된 메세지 : %s", client.name, chatting)
 }
 
-// sendMsgToRoomClients - 이중링크드리스트를 순회하여 클라이언트의 방 인덱스를 찾은 뒤, 방 인덱스와 메세지를 sendMsgToClient에게 전달한다.
-func sendMsgToRoomClients(room *Room, sender string, msg string) {
+// SendMsgToRoomClients - 이중링크드리스트를 순회하여 클라이언트의 방 인덱스를 찾은 뒤, 방 인덱스와 메세지를 sendMsgToClient에게 전달한다.
+func SendMsgToRoomClients(room *Room, sender string, msg string) {
 	for e := room.clientlist.Front(); e != nil; e = e.Next() {
 		c := e.Value.(Client)
-		sendMsgToClient(&c, sender, msg)
+		SendMsgToClient(&c, sender, msg)
 	}
 }
 
-// sendMsgToAllClients - 이중링크드리스트를 순회하여 존재하는 모든 클라이언트의 방 인덱스를 찾은 뒤, 방 인덱스와 메세지를 sendMsgToClient에게 전달한다.
-func sendMsgToAllClients(sender string, msg string) {
+// SendMsgToAllClients - 이중링크드리스트를 순회하여 존재하는 모든 클라이언트의 방 인덱스를 찾은 뒤, 방 인덱스와 메세지를 sendMsgToClient에게 전달한다.
+func SendMsgToAllClients(sender string, msg string) {
 	for re := Roomlist.Front(); re != nil; re = re.Next() {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
-			sendMsgToClient(&c, sender, msg)
+			SendMsgToClient(&c, sender, msg)
 		}
 	}
 }
