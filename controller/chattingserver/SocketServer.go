@@ -148,6 +148,9 @@ func RecvMsgFromClient(client *Client) {
 			return
 		}
 		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
+		client.ws.WriteJSON(map[string]interface{}{
+			"room": client.room.num,
+		})
 		// SendMsgToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
 		SendJoinMsgToClient(client.room, client.name)
 		room.clientlist.PushBack(*client)
