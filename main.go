@@ -22,7 +22,6 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
-		AllowHeaders: []string{"*"},
 	}))
 	e.Use(middleware.Recover())
 	e.GET("/chatting", chattingserver.Socket)
