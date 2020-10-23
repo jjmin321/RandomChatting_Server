@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -150,7 +149,8 @@ func RecvMsgFromClient(client *Client) {
 		}
 		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
 
-		client.ws.WriteMessage(websocket.TextMessage, []byte(strconv.Itoa(client.room.num)))
+		// client.ws.WriteMessage(websocket.TextMessage, []byte(strconv.Itoa(client.room.num)))
+		client.ws.WriteJSON(client.room.num)
 		// SendMsgToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
 		SendJoinMsgToClient(client.room, client.name)
 		room.clientlist.PushBack(*client)
@@ -170,7 +170,7 @@ func SendJoinMsgToClient(room *Room, sender string) {
 		if err != nil {
 			log.Print("입장 채팅 전송 중 에러 발생")
 		}
-		log.Printf("%d방에 전송된 입장 메세지 : %s", room.num, chatting)
+		log.Printf("%d번째 방에 전송된 입장 메세지 : %s", room.num, chatting)
 	}
 }
 
