@@ -166,7 +166,7 @@ func RecvMsgFromClient(client *Client) {
 
 		client.ws.WriteMessage(websocket.TextMessage, []byte("방 번호|"+strconv.Itoa(client.room.num)))
 		// SendMsgToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
-		SendJoinMsgToClient(client.room, client.name)
+		client.SendJoinMsgToClient()
 		room.clientlist.PushBack(*client)
 
 	case CHAT:
@@ -176,28 +176,28 @@ func RecvMsgFromClient(client *Client) {
 }
 
 // SendJoinMsgToClient - 클라이언트가 연결된 후 방이 배정되면 해당 방에 입장하였습니다 메세지를 전송.
-func SendJoinMsgToClient(room *Room, sender string) {
-	chatting := sender + "님이 입장하였습니다"
-	for e := room.clientlist.Front(); e != nil; e = e.Next() {
+func (client *Client) SendJoinMsgToClient() {
+	var chatting string
+	for e := client.room.clientlist.Front(); e != nil; e = e.Next() {
 		c := e.Value.(Client)
+		if client.name != c.name {
+			chatting = "방 유저|" + c.name
+		}
 		err := c.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
 		if err != nil {
 			log.Print("입장 채팅 전송 중 에러 발생")
 		}
-		log.Printf("%d번째 방에 전송된 입장 메세지 : %s", room.num, chatting)
+		log.Printf("%d번째 방 %s님에게 %s님이 입장했다고 알림이 갔습니다", client.room.num, c.name, client.name)
 	}
 }
 
 // SendRoomUserNameToClient - 같은 방에 접속되어 있는 사람이 있다면 이름을 반환함.
 func (client *Client) SendRoomUserNameToClient() {
 	var roomUser string
-	for re := Roomlist.Front(); re != nil; re = re.Next() {
-		r := re.Value.(Room)
-		for e := r.clientlist.Front(); e != nil; e = e.Next() {
-			c := e.Value.(Client)
-			if client.name != c.name && client.room.num == c.room.num {
-				roomUser = c.name
-			}
+	for e := client.room.clientlist.Front(); e != nil; e = e.Next() {
+		c := e.Value.(Client)
+		if client.name != c.name {
+			roomUser = c.name
 		}
 	}
 	err := client.ws.WriteMessage(websocket.TextMessage, []byte("방 유저|"+roomUser))
