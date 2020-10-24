@@ -176,12 +176,11 @@ func SendJoinMsgToClient(room *Room, sender string) {
 
 // SendMsgToClient - 클라이언트에게 웹소켓을 통해 메세지를 전송
 func SendMsgToClient(client *Client, sender string, msg string) {
-	chatting := sender + " : " + msg
+	chatting := "랜덤채팅|" + sender + "|" + msg
 	err := client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
 	if err != nil {
 		log.Print("채팅 전송 중 에러 발생")
 	}
-	log.Printf("%s님에게 전송된 메세지 : %s", client.name, chatting)
 }
 
 // SendMsgToRoomClients - 이중링크드리스트를 순회하여 클라이언트의 방 인덱스를 찾은 뒤, 방 인덱스와 메세지를 sendMsgToClient에게 전달한다.
