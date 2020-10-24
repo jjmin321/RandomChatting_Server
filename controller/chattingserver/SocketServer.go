@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -85,6 +86,15 @@ func Socket(c echo.Context) error {
 	}
 	go HandleConnection(ws)
 	return nil
+}
+
+// RecoverServer - 소켓 통신 중 고루틴에서 발생하는 예상치 못한 에러를 무시해준다.
+func RecoverServer() {
+	socketErr := recover()
+	if socketErr != nil {
+		log.Print("Recovered", socketErr)
+		debug.PrintStack()
+	}
 }
 
 // HandleConnection - 클라이언트를 객체를 생성한 후, HandleClient 쓰레드 호출
