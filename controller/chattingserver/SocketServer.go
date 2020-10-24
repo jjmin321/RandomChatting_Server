@@ -103,6 +103,7 @@ func RecoverServer() {
 
 // HandleConnection - 클라이언트를 객체를 생성한 후, HandleClient 쓰레드 호출
 func HandleConnection(ws *websocket.Conn) {
+	defer RecoverServer()
 	read := make(chan string)
 	quit := make(chan int)
 	client := &Client{ws, read, quit, "익명", &Room{-1, list.New()}}
@@ -111,6 +112,7 @@ func HandleConnection(ws *websocket.Conn) {
 
 // HandleClient - RecvMsgFromClient 쓰레드를 호출하고, 클라이언트의 명령이 오면 메세지 전송, 채팅 종료 구문을 실행시킨다.
 func HandleClient(client *Client) {
+	defer RecoverServer()
 	for {
 		select {
 		case msg := <-client.read:
@@ -134,6 +136,7 @@ func HandleClient(client *Client) {
 
 // RecvMsgFromClient - 클라이언트에서 명령이 올 때까지 대기하다가 명령이 오면 채널을 통해 HandleClient에게 값을 전달, 방이 모두 찼거나 한 아이디가 두 번 이상 접속한 경우 연결을 종료시킴.
 func RecvMsgFromClient(client *Client) {
+	defer RecoverServer()
 	_, bytemsg, err := client.ws.ReadMessage()
 	if err != nil {
 		client.quit <- 0
