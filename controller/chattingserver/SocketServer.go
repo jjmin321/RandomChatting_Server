@@ -198,11 +198,11 @@ func (client *Client) GetUserList() {
 		c := e.Value.(Client)
 		if client.name != c.name {
 			roomUser = c.name
+			err := client.ws.WriteMessage(websocket.TextMessage, []byte("방 유저|"+roomUser))
+			if err != nil {
+				log.Print("채팅 전송 중 에러 발생")
+			}
 		}
-	}
-	err := client.ws.WriteMessage(websocket.TextMessage, []byte("방 유저|"+roomUser))
-	if err != nil {
-		log.Print("채팅 전송 중 에러 발생")
 	}
 }
 
