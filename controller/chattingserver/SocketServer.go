@@ -267,6 +267,11 @@ func (client *Client) DeleteFromList() {
 			c := e.Value.(Client)
 			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
 				r.clientlist.Remove(e)
+			} else if c.name != client.name {
+				err := c.ws.WriteMessage(websocket.TextMessage, []byte("사람 나감|"+client.name))
+				if err != nil {
+					log.Print("채팅 전송 중 에러 발생")
+				}
 			}
 		}
 	}
