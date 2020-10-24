@@ -107,7 +107,6 @@ func HandleConnection(ws *websocket.Conn) {
 	quit := make(chan int)
 	client := &Client{ws, read, quit, "익명", &Room{-1, list.New()}}
 	go HandleClient(client)
-	log.Printf("%s에서 채팅 서버에 입장하였습니다.\t", ws.RemoteAddr().String())
 }
 
 // HandleClient - RecvMsgFromClient 쓰레드를 호출하고, 클라이언트의 명령이 오면 메세지 전송, 채팅 종료 구문을 실행시킨다.
@@ -122,7 +121,6 @@ func HandleClient(client *Client) {
 			}
 
 		case <-client.quit:
-			log.Printf("%s : %d번째 방의 %s님이 채팅 서버에서 나가셨습니다.", client.ws.RemoteAddr().String(), client.room.num, client.name)
 			client.ws.Close()
 			client.DeleteFromList()
 			return
@@ -142,7 +140,6 @@ func RecvMsgFromClient(client *Client) {
 		return
 	}
 	msg := string(bytemsg)
-	log.Print("1 : 로그인, 2 : 채팅 ", msg)
 
 	strmsgs := strings.Split(msg, "|")
 
@@ -153,16 +150,14 @@ func RecvMsgFromClient(client *Client) {
 		room := AllocateEmptyRoom()
 		if room.num < 1 {
 			client.ws.Close()
-			log.Print("방 인원이 다 찼습니다.")
 		}
 		client.room = room
 
 		if !client.DupUserCheck() {
-			log.Print("닉네임이 중복됨!")
 			client.quit <- 0
 			return
 		}
-		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
+		log.Printf("%s님이 %d번째 방에 입장하셨습니다\n", client.name, client.room.num)
 
 		client.ws.WriteMessage(websocket.TextMessage, []byte("방 번호|"+strconv.Itoa(client.room.num)))
 		client.SendJoinMsgToClient()
@@ -170,7 +165,6 @@ func RecvMsgFromClient(client *Client) {
 		room.clientlist.PushBack(*client)
 
 	case CHAT:
-		log.Printf("\n"+client.name+" 님의 메시지: %s\n", strmsgs[1])
 		client.read <- strmsgs[1]
 	}
 }
@@ -183,11 +177,7 @@ func (client *Client) SendJoinMsgToClient() {
 		if client.name != c.name {
 			chatting = "방 유저|" + client.name
 		}
-		err := c.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
-		if err != nil {
-			log.Print("입장 채팅 전송 중 에러 발생")
-		}
-		log.Printf("%d번째 방 %s님에게 %s님이 입장했다고 알림이 갔습니다", client.room.num, c.name, client.name)
+		c.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
 	}
 }
 
@@ -198,10 +188,7 @@ func (client *Client) GetUserList() {
 		c := e.Value.(Client)
 		if client.name != c.name {
 			roomUser = c.name
-			err := client.ws.WriteMessage(websocket.TextMessage, []byte("방 유저|"+roomUser))
-			if err != nil {
-				log.Print("채팅 전송 중 에러 발생")
-			}
+			client.ws.WriteMessage(websocket.TextMessage, []byte("방 유저|"+roomUser))
 		}
 	}
 }
@@ -209,10 +196,7 @@ func (client *Client) GetUserList() {
 // SendMsgToClient - 클라이언트에게 웹소켓을 통해 메세지를 전송
 func SendMsgToClient(client *Client, sender string, msg string) {
 	chatting := "랜덤채팅|" + sender + "|" + msg
-	err := client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
-	if err != nil {
-		log.Print("채팅 전송 중 에러 발생")
-	}
+	client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
 }
 
 // SendMsgToRoomClients - 이중링크드리스트를 순회하여 클라이언트의 방 인덱스를 찾은 뒤, 방 인덱스와 메세지를 sendMsgToClient에게 전달한다.
@@ -268,10 +252,7 @@ func (client *Client) DeleteFromList() {
 			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
 				r.clientlist.Remove(e)
 			} else if c.name != client.name {
-				err := c.ws.WriteMessage(websocket.TextMessage, []byte("사람 나감|"+client.name))
-				if err != nil {
-					log.Print("채팅 전송 중 에러 발생")
-				}
+				c.ws.WriteMessage(websocket.TextMessage, []byte("사람 나감|"+client.name))
 			}
 		}
 	}
