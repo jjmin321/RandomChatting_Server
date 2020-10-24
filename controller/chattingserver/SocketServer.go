@@ -21,7 +21,7 @@ type socketServerMethod interface {
 	HandleConnection()
 	HandleClient()
 	SendJoinMsgToClient()
-	SendRoomUserNameToClient()
+	GetUserList()
 	SendMsgToClient()
 	SendMsgToRoomClients()
 	SendMsgToAllClients()
@@ -166,6 +166,7 @@ func RecvMsgFromClient(client *Client) {
 
 		client.ws.WriteMessage(websocket.TextMessage, []byte("방 번호|"+strconv.Itoa(client.room.num)))
 		client.SendJoinMsgToClient()
+		client.GetUserList()
 		room.clientlist.PushBack(*client)
 
 	case CHAT:
@@ -190,8 +191,8 @@ func (client *Client) SendJoinMsgToClient() {
 	}
 }
 
-// SendRoomUserNameToClient - 같은 방에 접속되어 있는 사람이 있다면 이름을 반환함.
-func (client *Client) SendRoomUserNameToClient() {
+// GetUserList - 접속되어 있는 사람들의 정보를 반환함
+func (client *Client) GetUserList() {
 	var roomUser string
 	for e := client.room.clientlist.Front(); e != nil; e = e.Next() {
 		c := e.Value.(Client)
