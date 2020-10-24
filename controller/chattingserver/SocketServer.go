@@ -21,6 +21,7 @@ type socketServerMethod interface {
 	HandleConnection()
 	HandleClient()
 	SendJoinMsgToClient()
+	SendRoomUserNameToClient()
 	SendMsgToClient()
 	SendMsgToRoomClients()
 	SendMsgToAllClients()
@@ -59,6 +60,8 @@ type Room struct {
 var (
 	// Roomlist - 이중 링크드 리스트
 	Roomlist *list.List
+	// UserList - 채팅에 참여하고 있는 전체 멤버 목록
+	UserList []string
 	// Upgrader - http 프로토콜을 ws 프로토콜로 바꿈
 	Upgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -182,6 +185,24 @@ func SendJoinMsgToClient(room *Room, sender string) {
 			log.Print("입장 채팅 전송 중 에러 발생")
 		}
 		log.Printf("%d번째 방에 전송된 입장 메세지 : %s", room.num, chatting)
+	}
+}
+
+// SendRoomUserNameToClient - 같은 방에 접속되어 있는 사람이 있다면 이름을 반환함.
+func (client *Client) SendRoomUserNameToClient() {
+	var roomUser string
+	for re := Roomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(Room)
+		for e := r.clientlist.Front(); e != nil; e = e.Next() {
+			c := e.Value.(Client)
+			if client.name != c.name && client.room.num == c.room.num {
+				roomUser = c.name
+			}
+		}
+	}
+	err := client.ws.WriteMessage(websocket.TextMessage, []byte("방 유저|"+roomUser))
+	if err != nil {
+		log.Print("채팅 전송 중 에러 발생")
 	}
 }
 
