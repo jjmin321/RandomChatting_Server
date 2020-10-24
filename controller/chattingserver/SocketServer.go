@@ -17,6 +17,7 @@ import (
 type socketServerMethod interface {
 	init()
 	Socket()
+	RecoverServer()
 	HandleConnection()
 	HandleClient()
 	SendJoinMsgToClient()
