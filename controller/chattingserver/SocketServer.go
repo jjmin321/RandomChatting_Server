@@ -165,7 +165,6 @@ func RecvMsgFromClient(client *Client) {
 		log.Printf("안녕하세요 %s님, %d번째 방에 입장하셨습니다.\n", client.name, client.room.num)
 
 		client.ws.WriteMessage(websocket.TextMessage, []byte("방 번호|"+strconv.Itoa(client.room.num)))
-		// SendMsgToRoomClients(client.room, client.name, "님이 입장하셨습니다.")
 		client.SendJoinMsgToClient()
 		room.clientlist.PushBack(*client)
 
@@ -181,7 +180,7 @@ func (client *Client) SendJoinMsgToClient() {
 	for e := client.room.clientlist.Front(); e != nil; e = e.Next() {
 		c := e.Value.(Client)
 		if client.name != c.name {
-			chatting = "방 유저|" + c.name
+			chatting = "방 유저|" + client.name
 		}
 		err := c.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
 		if err != nil {
