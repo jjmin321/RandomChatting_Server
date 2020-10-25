@@ -197,16 +197,21 @@ func (client *Client) GetUserList() {
 }
 
 // SendMsgToClient - 클라이언트에게 웹소켓을 통해 메세지를 전송
-func SendMsgToClient(client *Client, sender string, msg string) {
-	chatting := "랜덤채팅|" + sender + "|" + msg
-	client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
+func SendMsgToClient(client *Client, sender string, msg string, all bool) {
+	if all == true {
+		chatting := "전체채팅|" + sender + "|" + msg
+		client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
+	} else {
+		chatting := "랜덤채팅|" + sender + "|" + msg
+		client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
+	}
 }
 
 // SendMsgToRoomClients - 이중링크드리스트를 순회하여 클라이언트의 방 인덱스를 찾은 뒤, 방 인덱스와 메세지를 sendMsgToClient에게 전달한다.
 func SendMsgToRoomClients(room *Room, sender string, msg string) {
 	for e := room.clientlist.Front(); e != nil; e = e.Next() {
 		c := e.Value.(Client)
-		SendMsgToClient(&c, sender, msg)
+		SendMsgToClient(&c, sender, msg, false)
 	}
 }
 
@@ -216,7 +221,7 @@ func SendMsgToAllClients(sender string, msg string) {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
-			SendMsgToClient(&c, sender, msg)
+			SendMsgToClient(&c, sender, msg, true)
 		}
 	}
 }
