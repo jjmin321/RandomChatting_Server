@@ -116,7 +116,7 @@ func HandleClient(client *Client) {
 	for {
 		select {
 		case msg := <-client.read:
-			if strings.HasPrefix(msg, "[확성기]") {
+			if strings.HasPrefix(msg, "[전체]") {
 				SendMsgToAllClients(client.name, msg)
 			} else {
 				SendMsgToRoomClients(client.room, client.name, msg)
