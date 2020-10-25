@@ -259,4 +259,5 @@ func (client *Client) DeleteFromList() {
 			}
 		}
 	}
+	log.Printf("%s님이 %d번째 방에서 퇴장하셨습니다\n", client.name, client.room.num)
 }
