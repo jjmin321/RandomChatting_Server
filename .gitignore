@@ -1,5 +1,3 @@
-go.sum
-go.mod
 image/
 controller/chattingserver/TCP/
 config/config.toml
