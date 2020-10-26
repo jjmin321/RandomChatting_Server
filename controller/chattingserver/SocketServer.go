@@ -126,7 +126,7 @@ func HandleClient(client *Client) {
 			SendMsgToAllClients(client.name, allMsg)
 
 		case <-client.quit:
-			client.ws.Close()
+			client.ws.WriteMessage(websocket.TextMessage, []byte("접속중ᗠ"+client.name))
 			client.DeleteFromList()
 			return
 
@@ -159,7 +159,7 @@ func RecvMsgFromClient(client *Client) {
 		}
 		client.room = room
 
-		if !client.DupUserCheck() {
+		if client.DupUserCheck() {
 			client.quit <- 0
 			return
 		}
@@ -250,11 +250,11 @@ func (client *Client) DupUserCheck() bool {
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
 			if strings.Compare(client.name, c.name) == 0 {
-				return false
+				return true
 			}
 		}
 	}
-	return true
+	return false
 }
 
 // DeleteFromList - 클라이언트의 접속이 끊어지면 링크드리스트에서도 삭제함.
