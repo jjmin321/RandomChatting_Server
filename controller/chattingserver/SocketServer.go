@@ -147,7 +147,7 @@ func RecvMsgFromClient(client *Client) {
 	}
 	msg := string(bytemsg)
 
-	strmsgs := strings.Split(msg, "|")
+	strmsgs := strings.Split(msg, "ᗠ")
 
 	switch strmsgs[0] {
 	case LOGIN:
@@ -165,7 +165,7 @@ func RecvMsgFromClient(client *Client) {
 		}
 		log.Printf("%s님이 %d번째 방에 입장하셨습니다\n", client.name, client.room.num)
 
-		client.ws.WriteMessage(websocket.TextMessage, []byte("방 번호|"+strconv.Itoa(client.room.num)))
+		client.ws.WriteMessage(websocket.TextMessage, []byte("방 번호ᗠ"+strconv.Itoa(client.room.num)))
 		client.SendJoinMsgToClient()
 		client.GetUserList()
 		room.clientlist.PushBack(*client)
@@ -184,7 +184,7 @@ func (client *Client) SendJoinMsgToClient() {
 	for e := client.room.clientlist.Front(); e != nil; e = e.Next() {
 		c := e.Value.(Client)
 		if client.name != c.name {
-			chatting = "방 유저|" + client.name
+			chatting = "방 유저ᗠ" + client.name
 		}
 		c.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
 	}
@@ -197,7 +197,7 @@ func (client *Client) GetUserList() {
 		c := e.Value.(Client)
 		if client.name != c.name {
 			roomUser = c.name
-			client.ws.WriteMessage(websocket.TextMessage, []byte("방 유저|"+roomUser))
+			client.ws.WriteMessage(websocket.TextMessage, []byte("방 유저ᗠ"+roomUser))
 		}
 	}
 }
@@ -205,10 +205,10 @@ func (client *Client) GetUserList() {
 // SendMsgToClient - 클라이언트에게 웹소켓을 통해 메세지를 전송
 func SendMsgToClient(client *Client, sender string, msg string, all bool) {
 	if all == true {
-		chatting := "전체채팅|" + sender + "|" + msg
+		chatting := "전체채팅ᗠ" + sender + "ᗠ" + msg
 		client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
 	} else {
-		chatting := "랜덤채팅|" + sender + "|" + msg
+		chatting := "랜덤채팅ᗠ" + sender + "ᗠ" + msg
 		client.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
 	}
 }
@@ -266,7 +266,7 @@ func (client *Client) DeleteFromList() {
 			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
 				r.clientlist.Remove(e)
 			} else if c.name != client.name {
-				c.ws.WriteMessage(websocket.TextMessage, []byte("사람 나감|"+client.name))
+				c.ws.WriteMessage(websocket.TextMessage, []byte("사람 나감ᗠ"+client.name))
 			}
 		}
 	}
