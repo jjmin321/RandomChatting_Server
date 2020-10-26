@@ -34,8 +34,10 @@ type socketServerMethod interface {
 const (
 	// LOGIN : Magic Number for Chatting Login
 	LOGIN = "1"
-	// CHAT : Magic Number for Chatting
-	CHAT = "2"
+	// ROOMCHAT : Magic Number for Room Chatting
+	ROOMCHAT = "2"
+	// ALLCHAT : Magic Number for All Chatting
+	ALLCHAT = "3"
 	// MAXUSER : Magic Number for Chatting room max user
 	MAXUSER = 2
 	// MAXCOUNT : Magic Number for Chatting room max count
@@ -44,11 +46,12 @@ const (
 
 // Client - 채팅을 이용하는 사용자의 정보
 type Client struct {
-	ws   *websocket.Conn
-	read chan string
-	quit chan int
-	name string
-	room *Room
+	ws           *websocket.Conn
+	roomChatting chan string
+	allChatting  chan string
+	quit         chan int
+	name         string
+	room         *Room
 }
 
 // Room - 채팅방 정보
@@ -104,9 +107,10 @@ func RecoverServer() {
 // HandleConnection - 클라이언트를 객체를 생성한 후, HandleClient 쓰레드 호출
 func HandleConnection(ws *websocket.Conn) {
 	defer RecoverServer()
-	read := make(chan string)
+	roomChatting := make(chan string)
+	allChatting := make(chan string)
 	quit := make(chan int)
-	client := &Client{ws, read, quit, "익명", &Room{-1, list.New()}}
+	client := &Client{ws, roomChatting, allChatting, quit, "익명", &Room{-1, list.New()}}
 	go HandleClient(client)
 }
 
@@ -115,12 +119,11 @@ func HandleClient(client *Client) {
 	defer RecoverServer()
 	for {
 		select {
-		case msg := <-client.read:
-			if strings.HasPrefix(msg, "[전체]") {
-				SendMsgToAllClients(client.name, msg)
-			} else {
-				SendMsgToRoomClients(client.room, client.name, msg)
-			}
+		case roomMsg := <-client.roomChatting:
+			SendMsgToRoomClients(client.room, client.name, roomMsg)
+
+		case allMsg := <-client.allChatting:
+			SendMsgToAllClients(client.name, allMsg)
 
 		case <-client.quit:
 			client.ws.Close()
@@ -167,8 +170,11 @@ func RecvMsgFromClient(client *Client) {
 		client.GetUserList()
 		room.clientlist.PushBack(*client)
 
-	case CHAT:
-		client.read <- strmsgs[1]
+	case ROOMCHAT:
+		client.roomChatting <- strmsgs[1]
+
+	case ALLCHAT:
+		client.allChatting <- strmsgs[1]
 	}
 }
 
