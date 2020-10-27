@@ -280,7 +280,7 @@ func (client *Client) DeleteFromList() {
 			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
 				r.clientlist.Remove(e)
 			} else if c.name != client.name {
-				c.ws.WriteMessage(websocket.TextMessage, []byte("사람 나감ᗠ"+client.name))
+				c.ws.WriteMessage(websocket.TextMessage, []byte("사람 나감ᗠ"+strconv.Itoa(client.room.num)+"ᗠ"+client.name))
 			}
 		}
 	}
