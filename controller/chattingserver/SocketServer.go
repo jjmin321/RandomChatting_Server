@@ -186,10 +186,9 @@ func (client *Client) SendJoinMsgToClient() {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
-			if client.name != c.name {
-				c.ws.WriteMessage(websocket.TextMessage, []byte(allJoinMsg))
-			}
+			c.ws.WriteMessage(websocket.TextMessage, []byte(allJoinMsg))
 			if client.room.num == c.room.num {
+				client.ws.WriteMessage(websocket.TextMessage, []byte(roomJoinMsg))
 				c.ws.WriteMessage(websocket.TextMessage, []byte(roomJoinMsg))
 			}
 		}
