@@ -178,15 +178,21 @@ func RecvMsgFromClient(client *Client) {
 	}
 }
 
-// SendJoinMsgToClient - 클라이언트가 연결된 후 방이 배정되면 해당 방에 입장하였습니다 메세지를 전송.
+// SendJoinMsgToClient - 클라이언트가 연결되면 모든 사람에게 접속했다고 메세지 보냄, 방에 접속한 메세지는 같은 방 사람에게만 보냄
 func (client *Client) SendJoinMsgToClient() {
-	var chatting string
-	for e := client.room.clientlist.Front(); e != nil; e = e.Next() {
-		c := e.Value.(Client)
-		if client.name != c.name {
-			chatting = "방 유저ᗠ" + client.name
+	allJoinMsg := "전체 유저ᗠ" + client.name
+	roomJoinMsg := "방 유저ᗠ" + client.name
+	for re := Roomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(Room)
+		for e := r.clientlist.Front(); e != nil; e = e.Next() {
+			c := e.Value.(Client)
+			if client.name != c.name {
+				c.ws.WriteMessage(websocket.TextMessage, []byte(allJoinMsg))
+			}
+			if client.room.num == c.room.num {
+				c.ws.WriteMessage(websocket.TextMessage, []byte(roomJoinMsg))
+			}
 		}
-		c.ws.WriteMessage(websocket.TextMessage, []byte(chatting))
 	}
 }
 
