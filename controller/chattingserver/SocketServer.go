@@ -182,13 +182,14 @@ func RecvMsgFromClient(client *Client) {
 func (client *Client) SendJoinMsgToClient() {
 	allJoinMsg := "전체 유저 접속ᗠ" + client.name
 	roomJoinMsg := "방 유저 접속ᗠ" + client.name
+	client.ws.WriteMessage(websocket.TextMessage, []byte(allJoinMsg))
+	client.ws.WriteMessage(websocket.TextMessage, []byte(roomJoinMsg))
 	for re := Roomlist.Front(); re != nil; re = re.Next() {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
 			c.ws.WriteMessage(websocket.TextMessage, []byte(allJoinMsg))
 			if client.room.num == c.room.num {
-				client.ws.WriteMessage(websocket.TextMessage, []byte(roomJoinMsg))
 				c.ws.WriteMessage(websocket.TextMessage, []byte(roomJoinMsg))
 			}
 		}
