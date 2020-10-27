@@ -198,12 +198,20 @@ func (client *Client) SendJoinMsgToClient() {
 
 // GetUserList - 접속되어 있는 사람들의 정보를 반환함
 func (client *Client) GetUserList() {
+	var allUser string
 	var roomUser string
-	for e := client.room.clientlist.Front(); e != nil; e = e.Next() {
-		c := e.Value.(Client)
-		if client.name != c.name {
-			roomUser = c.name
-			client.ws.WriteMessage(websocket.TextMessage, []byte("방 유저ᗠ"+roomUser))
+	for re := Roomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(Room)
+		for e := r.clientlist.Front(); e != nil; e = e.Next() {
+			c := e.Value.(Client)
+			if client.name != c.name {
+				allUser = c.name
+				client.ws.WriteMessage(websocket.TextMessage, []byte("전체 유저ᗠ"+allUser))
+			}
+			if client.room.num == c.room.num {
+				roomUser = c.name
+				client.ws.WriteMessage(websocket.TextMessage, []byte(roomUser))
+			}
 		}
 	}
 }
