@@ -6,6 +6,7 @@ import (
 	"RandomChatting_Server/controller/chattingserver"
 	"RandomChatting_Server/database"
 	"RandomChatting_Server/lib"
+	"net/http"
 
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo"
@@ -22,6 +23,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
+		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
 	e.Use(middleware.Recover())
 	e.GET("/chatting", chattingserver.Socket)
