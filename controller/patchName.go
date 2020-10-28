@@ -6,15 +6,15 @@ import (
 	"github.com/labstack/echo"
 )
 
-// UpdateMyInfoParam - 파라미터 형식 정의 구조체
-type UpdateMyInfoParam struct {
+// PatchNameParam - 파라미터 형식 정의 구조체
+type PatchNameParam struct {
 	Name string `json:"name" form:"name" query:"name"`
 }
 
-// UpdateMyInfo - 내 정보 변경 메서드
-func UpdateMyInfo(c echo.Context) error {
+// PatchName - 내 정보 변경 메서드
+func PatchName(c echo.Context) error {
 	ID := c.Get("ID").(string)
-	u := new(UpdateMyInfoParam)
+	u := new(PatchNameParam)
 	if err := c.Bind(u); err != nil {
 		return err
 	}

@@ -23,7 +23,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
-		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodPatch, http.MethodDelete},
 	}))
 	e.Use(middleware.Recover())
 	e.GET("/chatting", chattingserver.Socket)
@@ -31,6 +31,6 @@ func main() {
 	e.POST("/signIn", controller.SignIn)
 	e.POST("/signUp", controller.SignUp)
 	e.PUT("/putImage", controller.PutImage, middleware.JWT([]byte("secret")), lib.VerifyAccessToken)
-	e.PATCH("/updateName", controller.UpdateMyInfo, middleware.JWT([]byte("secret")), lib.VerifyAccessToken)
+	e.PATCH("/patchName", controller.PatchName, middleware.JWT([]byte("secret")), lib.VerifyAccessToken)
 	e.Logger.Fatal(e.Start(":80"))
 }
