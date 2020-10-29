@@ -32,5 +32,5 @@ func main() {
 	e.POST("/signUp", controller.SignUp)
 	e.PUT("/putImage", controller.PutImage, middleware.JWT([]byte("secret")), lib.VerifyAccessToken)
 	e.PATCH("/patchName", controller.PatchName, middleware.JWT([]byte("secret")), lib.VerifyAccessToken)
-	e.Logger.Fatal(e.Start(":80"))
+	e.Logger.Fatal(e.Start(":8080"))
 }
