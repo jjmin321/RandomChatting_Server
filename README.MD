@@ -2,6 +2,9 @@
 
 💬 대구소프트웨어고등학교 학생들이 함께 사용할 수 있는 채팅 서비스입니다
 
+서버 코드: https://github.com/jjmin321/randomchatting_web<br>
+개발일지 : https://jjmin321.github.io/development/대소고-랜덤채팅-개발-일지/
+
 ## 기능 Function
 - 서비스 이용을 위한 로그인 및 회원가입 기능 
 - 닉네임을 통한 익명성이 보장되는 전체 채팅과 랜덤 채팅 기능 
