@@ -291,8 +291,11 @@ func (client *Client) DeleteFromList() {
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
 			// 나가거나 이미 접속되어 있는 계정으로 들어온 경우 IP를 사용하여 제거
-			if client.ws.RemoteAddr() == c.ws.RemoteAddr() || client.name == c.name {
+			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
 				r.clientlist.Remove(e)
+			} else if client.name == c.name {
+				r.clientlist.Remove(e)
+				c.ws.WriteMessage(websocket.TextMessage, []byte("접속중ᗠ"+c.name))
 			}
 		}
 	}
