@@ -180,6 +180,9 @@ func RecvMsgFromClient(client *Client) {
 
 // SendJoinMsgToClient - 클라이언트가 연결되면 모든 사람에게 접속했다고 메세지 보냄, 방에 접속한 메세지는 같은 방 사람에게만 보냄
 func (client *Client) SendJoinMsgToClient() {
+	if client.name != "익명" {
+		return
+	}
 	allJoinMsg := "전체 유저 접속ᗠ" + client.name
 	roomJoinMsg := "방 유저 접속ᗠ" + client.name
 	client.ws.WriteMessage(websocket.TextMessage, []byte(allJoinMsg))
@@ -279,7 +282,7 @@ func (client *Client) DeleteFromList() {
 			c := e.Value.(Client)
 			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
 				r.clientlist.Remove(e)
-			} else if c.name != client.name {
+			} else if c.name != client.name || c.name != "익명" {
 				c.ws.WriteMessage(websocket.TextMessage, []byte("사람 나감ᗠ"+strconv.Itoa(client.room.num)+"ᗠ"+client.name))
 			}
 		}
