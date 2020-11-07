@@ -291,8 +291,12 @@ func (client *Client) DeleteFromList() {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
+			// if : 다중 접속 시도한 IP를 제거 , else if : 원래 접속되어 있던 게정도 제거
 			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
 				r.clientlist.Remove(e)
+			} else if client.name == c.name {
+				r.clientlist.Remove(e)
+				c.ws.WriteMessage(websocket.TextMessage, []byte("접속중ᗠ"+c.name))
 			}
 		}
 	}
