@@ -153,16 +153,17 @@ func RecvMsgFromClient(client *Client) {
 	case LOGIN:
 		client.name = strings.TrimSpace(strmsgs[1])
 
+		if client.DupUserCheck() {
+			client.quit <- 0
+			return
+		}
+
 		room := AllocateEmptyRoom()
 		if room.num < 1 {
 			client.ws.Close()
 		}
 		client.room = room
 
-		if client.DupUserCheck() {
-			client.quit <- 0
-			return
-		}
 		log.Printf("%s님이 %d번째 방에 입장하셨습니다\n", client.name, client.room.num)
 
 		client.ws.WriteMessage(websocket.TextMessage, []byte("방 번호ᗠ"+strconv.Itoa(client.room.num)))
@@ -290,12 +291,8 @@ func (client *Client) DeleteFromList() {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
-			// 나가거나 이미 접속되어 있는 계정으로 들어온 경우 IP를 사용하여 제거
 			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
 				r.clientlist.Remove(e)
-			} else if client.name == c.name {
-				r.clientlist.Remove(e)
-				c.ws.WriteMessage(websocket.TextMessage, []byte("접속중ᗠ"+c.name))
 			}
 		}
 	}
