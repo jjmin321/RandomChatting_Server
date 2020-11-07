@@ -126,8 +126,7 @@ func HandleClient(client *Client) {
 			SendMsgToAllClients(client.name, allMsg)
 
 		case <-client.quit:
-			client.ws.WriteMessage(websocket.TextMessage, []byte("접속중ᗠ"+client.name))
-			client.DeleteFromList()
+			client.DeleteFromList(false)
 			return
 
 		default:
@@ -154,7 +153,8 @@ func RecvMsgFromClient(client *Client) {
 		client.name = strings.TrimSpace(strmsgs[1])
 
 		if client.DupUserCheck() {
-			client.quit <- 0
+			client.ws.WriteMessage(websocket.TextMessage, []byte("접속중ᗠ"+client.name))
+			client.DeleteFromList(true)
 			return
 		}
 
@@ -276,12 +276,13 @@ func (client *Client) DupUserCheck() bool {
 }
 
 // DeleteFromList - 클라이언트의 접속이 끊어지면 링크드리스트에서도 삭제함.
-func (client *Client) DeleteFromList() {
+func (client *Client) DeleteFromList(isDup bool) {
 	for re := Roomlist.Front(); re != nil; re = re.Next() {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
-			if client.name != "익명" {
+			// 중복되서 나가는 계정은 퇴장 메세지를 보내지 않음, 원래 접속되어 있는 계정은 웹에서 퇴장시키므로 상관 X
+			if client.name != "익명" && isDup == false {
 				c.ws.WriteMessage(websocket.TextMessage, []byte("사람 나감ᗠ"+strconv.Itoa(client.room.num)+"ᗠ"+client.name))
 				log.Printf("%s님에게 %s님이 퇴장하였다고 전송되었습니다", c.name, client.name)
 			}
