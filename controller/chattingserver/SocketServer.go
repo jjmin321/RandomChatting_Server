@@ -153,8 +153,17 @@ func RecvMsgFromClient(client *Client) {
 		client.name = strings.TrimSpace(strmsgs[1])
 
 		if client.DupUserCheck() {
+			for re := Roomlist.Front(); re != nil; re = re.Next() {
+				r := re.Value.(Room)
+				for e := r.clientlist.Front(); e != nil; e = e.Next() {
+					c := e.Value.(Client)
+					// if : 나간 사용자 제거 , else if : 다중 접속한 계정 제거
+					if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
+						r.clientlist.Remove(e)
+					}
+				}
+			}
 			client.ws.WriteMessage(websocket.TextMessage, []byte("접속중ᗠ"+client.name))
-			client.DeleteFromList(true)
 			return
 		}
 
@@ -282,7 +291,7 @@ func (client *Client) DeleteFromList(isDup bool) {
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
 			// 중복되서 나가는 계정은 퇴장 메세지를 보내지 않음, 원래 접속되어 있는 계정은 웹에서 퇴장시키므로 상관 X
-			if client.name != "익명" && isDup == false {
+			if client.name != "익명" {
 				c.ws.WriteMessage(websocket.TextMessage, []byte("사람 나감ᗠ"+strconv.Itoa(client.room.num)+"ᗠ"+client.name))
 				log.Printf("%s님에게 %s님이 퇴장하였다고 전송되었습니다", c.name, client.name)
 			}
@@ -292,7 +301,7 @@ func (client *Client) DeleteFromList(isDup bool) {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
-			// if : 다중 접속 시도한 IP를 제거 , else if : 원래 접속되어 있던 게정도 제거
+			// if : 나간 사용자 제거 , else if : 다중 접속한 계정 제거
 			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
 				r.clientlist.Remove(e)
 			} else if client.name == c.name {
