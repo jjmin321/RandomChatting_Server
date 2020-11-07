@@ -180,7 +180,7 @@ func RecvMsgFromClient(client *Client) {
 
 // SendJoinMsgToClient - 클라이언트가 연결되면 모든 사람에게 접속했다고 메세지 보냄, 방에 접속한 메세지는 같은 방 사람에게만 보냄
 func (client *Client) SendJoinMsgToClient() {
-	if client.name != "익명" {
+	if client.name == "익명" {
 		return
 	}
 	allJoinMsg := "전체 유저 접속ᗠ" + client.name
