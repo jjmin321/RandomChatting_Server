@@ -280,11 +280,18 @@ func (client *Client) DeleteFromList() {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
-			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
-				r.clientlist.Remove(e)
-			} else if client.name != "익명" {
+			if client.name != "익명" {
 				c.ws.WriteMessage(websocket.TextMessage, []byte("사람 나감ᗠ"+strconv.Itoa(client.room.num)+"ᗠ"+client.name))
 				log.Printf("%s님에게 %s님이 퇴장하였다고 전송되었습니다", c.name, client.name)
+			}
+		}
+	}
+	for re := Roomlist.Front(); re != nil; re = re.Next() {
+		r := re.Value.(Room)
+		for e := r.clientlist.Front(); e != nil; e = e.Next() {
+			c := e.Value.(Client)
+			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
+				r.clientlist.Remove(e)
 			}
 		}
 	}
