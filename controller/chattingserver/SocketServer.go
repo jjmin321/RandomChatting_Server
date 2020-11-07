@@ -290,7 +290,8 @@ func (client *Client) DeleteFromList() {
 		r := re.Value.(Room)
 		for e := r.clientlist.Front(); e != nil; e = e.Next() {
 			c := e.Value.(Client)
-			if client.ws.RemoteAddr() == c.ws.RemoteAddr() {
+			// 나가거나 이미 접속되어 있는 계정으로 들어온 경우 IP를 사용하여 제거
+			if client.ws.RemoteAddr() == c.ws.RemoteAddr() || client.name == c.name {
 				r.clientlist.Remove(e)
 			}
 		}
