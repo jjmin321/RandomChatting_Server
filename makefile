@@ -22,4 +22,4 @@ compose-up:
 # docker-compose.yml 서비스 삭제
 .PHONY: compose-down
 compose-down:
-	@docker-compose -f docker-compose.yml down
+	@docker-compose --env-file docker.env -f docker-compose.yml down
