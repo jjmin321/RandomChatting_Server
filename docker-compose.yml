@@ -1,0 +1,13 @@
+version: '3'
+services: 
+  postgres:
+    image: postgres:12
+    container_name: postgres
+    environment: 
+      - POSTGRES_DB=${DB}
+      - POSTGRES_USER=${USER}
+      - POSTGRES_PASSWORD=${PASSWORD}
+    ports:
+      - '${IP}:${POSTGRESQL}'
+    external_links: 
+      - 'server'

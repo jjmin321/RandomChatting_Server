@@ -1,3 +1,4 @@
 image/
 controller/chattingserver/TCP/
 config/config.toml
+docker.env
