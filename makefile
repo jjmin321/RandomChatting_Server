@@ -3,7 +3,7 @@
 build:
 	@docker build --tag randomchatting_server .
 
-# dockerfile 실행
+# 서버 컨테이너 실행, 접속 
 .PHONY: run
 run:
 	@docker run -i -t -p 8080:8080/tcp --name server randomchatting_server
@@ -23,3 +23,8 @@ compose-up:
 .PHONY: compose-down
 compose-down:
 	@docker-compose --env-file docker.env -f docker-compose.yml down
+
+# 데이터베이스 컨테이너 접속
+.PHONY: postgresql
+pg:
+	@docker exec -it postgres psql -Ujejeongmin
