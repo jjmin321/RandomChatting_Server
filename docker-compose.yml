@@ -5,9 +5,7 @@ services:
     container_name: postgres
     environment: 
       - POSTGRES_DB=${DB}
-      - POSTGRES_USER=${USER}
+      - POSTGRES_USER=${DBUSER}
       - POSTGRES_PASSWORD=${PASSWORD}
     ports:
       - '${IP}:${POSTGRESQL}'
-    external_links: 
-      - 'server'
