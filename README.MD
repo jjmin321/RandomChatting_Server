@@ -22,7 +22,7 @@
 
 ## 시스템 구상도
 
-![image](https://user-images.githubusercontent.com/52072077/97800503-0676c680-1c79-11eb-9156-7c5c303a30d5.png)
+![image](https://user-images.githubusercontent.com/52072077/101109996-6a473300-361b-11eb-8008-bbd1d9b10bb0.png)
 
 ## 사용 기술
 
