@@ -62,8 +62,6 @@
 
 [jjmin321/RandomChatting_Web](https://github.com/jjmin321/randomchatting_web)
 
-[대소고 랜덤채팅 개발 일지 2020-11-03](https://jjmin321.github.io/development/대소고-랜덤채팅-개발-일지/)
-
-[도커를 사용하여 5분만에 배포 끝내는 법 2020-12-06](https://jjmin321.github.io/development/도커를-사용하여-5분만에-배포-끝내는-법/)
+[도커로 배포하기 2020-12-06](https://jjmin321.github.io/development/도커로-배포하기/)
 
 
